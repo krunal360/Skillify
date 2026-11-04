@@ -1,0 +1,408 @@
+{% extends 'skillify_admin/base.html' %}
+{% block title %}Reviews{% endblock %}
+
+{% block extra_style %}
+<style>
+.tag-helpful      { background:rgba(16,185,129,0.12); color:#059669; }
+.tag-clear        { background:rgba(59,130,246,0.12);  color:#2563EB; }
+.tag-patient      { background:rgba(139,92,246,0.12);  color:#7C3AED; }
+.tag-knowledgeable{ background:rgba(245,158,11,0.12);  color:#D97706; }
+.tag-punctual     { background:rgba(20,184,166,0.12);  color:#0F766E; }
+.tag-engaging     { background:rgba(236,72,153,0.12);  color:#DB2777; }
+
+.tag-pill {
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:12px;
+    font-size:0.7rem;
+    font-weight:600;
+    margin:2px;
+}
+
+.star-filled { color:#F59E0B; }
+.star-empty  { color:#e2e8f0; }
+
+.comment-cell {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: #6c757d;
+    cursor: pointer;
+}
+
+.recommend-yes { color:#059669; font-weight:700; font-size:0.78rem; }
+.recommend-no  { color:#dc2626; font-weight:700; font-size:0.78rem; }
+
+/* Comment full modal */
+.comment-modal-overlay {
+    display:none; position:fixed;
+    top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,0.4);
+    z-index:999;
+    align-items:center;justify-content:center;
+}
+.comment-modal-overlay.show { display:flex; }
+.comment-modal {
+    background:#fff; border-radius:14px;
+    padding:28px; width:100%; max-width:500px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.15);
+}
+
+/* Expandable Tags Filter */
+.tag-filter-container {
+    position: relative;
+    display: inline-block;
+    min-width: 180px;
+    width: auto;
+}
+
+.tag-filter-toggle {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    color: #2d3748;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    line-height: normal;
+    white-space: nowrap;
+}
+
+.tag-filter-toggle:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.tag-filter-toggle.active {
+    background: #f3f4f6;
+    border-color: #4F46E5;
+    color: #4F46E5;
+}
+
+.tag-filter-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 8px;
+    display: none;
+    z-index: 100;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    max-height: 240px;
+    overflow-y: auto;
+    min-width: 180px;
+}
+
+.tag-filter-dropdown.show {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    align-content: start;
+}
+
+.tag-checkbox {
+    flex: 0 0 calc(50% - 2px);
+    display: flex;
+    align-items: center;
+}
+
+.tag-checkbox input {
+    display: none;
+}
+
+.tag-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: #f3f4f6;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #2d3748;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.tag-checkbox label:hover {
+    background: #e5e7eb;
+}
+
+.tag-checkbox input:checked + label {
+    background: #4F46E5;
+    color: #fff;
+    font-weight: 600;
+}
+
+.tag-checkbox input:checked + label::before {
+    content: "✓ ";
+    font-weight: bold;
+}
+
+.tag-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    background: #EF4444;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 4px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-star-fill"></i> Reviews</h1>
+    <p>All learner reviews and ratings</p>
+</div>
+
+<!-- Filter + Export -->
+<form method="GET" action="{% url 'admin_reviews' %}" id="reviewsFilterForm">
+    <div class="admin-card" style="padding:14px 16px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <select name="tutor" class="select-filter">
+                <option value="all" {% if tutor_filter == 'all' %}selected{% endif %}>All Tutors</option>
+                {% for tutor_id, first_name, last_name in all_tutors %}
+                <option value="{{ tutor_id }}" {% if tutor_filter|stringformat:'s' == tutor_id|stringformat:'s' %}selected{% endif %}>
+                    {{ first_name }} {{ last_name }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="session_type" class="select-filter">
+                <option value="all" {% if session_type_filter == 'all' %}selected{% endif %}>All Session Types</option>
+                {% for session_type in all_session_types %}
+                <option value="{{ session_type }}" {% if session_type_filter == session_type %}selected{% endif %}>
+                    {{ session_type|title }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="rating" class="select-filter">
+                <option value="all" {% if rating_filter == 'all' %}selected{% endif %}>All Ratings</option>
+                {% for i in "54321" %}
+                <option value="{{ i }}" {% if rating_filter == i %}selected{% endif %}>{{ i }} ★</option>
+                {% endfor %}
+            </select>
+
+            <select name="recommendation" class="select-filter">
+                <option value="all" {% if recommendation_filter == 'all' %}selected{% endif %}>All Recommendations</option>
+                <option value="yes" {% if recommendation_filter == 'yes' %}selected{% endif %}>✅ Recommended</option>
+                <option value="no" {% if recommendation_filter == 'no' %}selected{% endif %}>❌ Not Recommended</option>
+            </select>
+
+            <!-- Expandable Tags Filter -->
+            <div class="tag-filter-container">
+                <button type="button" class="tag-filter-toggle" id="tagFilterToggle" onclick="toggleTagFilter(event)">
+                    <span>Tags <span class="tag-filter-count" id="tagsCount">{{ tags_filter_list|length }}</span></span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="tag-filter-dropdown" id="tagFilterDropdown">
+                    {% for tag in all_tags %}
+                    <div class="tag-checkbox">
+                        <input type="checkbox" id="tag_{{ tag }}" name="tags" value="{{ tag }}" 
+                               {% if tag in tags_filter_list %}checked{% endif %} 
+                               onchange="updateTagsCount()">
+                        <label for="tag_{{ tag }}">{{ tag|title }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <button type="submit" class="search-btn"><i class="bi bi-funnel"></i> Filter</button>
+            <a href="{% url 'admin_reviews' %}" class="search-btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </a>
+            <span style="font-size:0.82rem;color:#adb5bd;margin-left:4px;">{{ total }} review{{ total|pluralize }}</span>
+            <a href="{% url 'admin_reviews' %}?export=csv{% if rating_filter != 'all' %}&rating={{ rating_filter }}{% endif %}{% if session_type_filter != 'all' %}&session_type={{ session_type_filter }}{% endif %}{% if recommendation_filter != 'all' %}&recommendation={{ recommendation_filter }}{% endif %}{% for tag in tags_filter_list %}&tags={{ tag }}{% endfor %}{% if tutor_filter != 'all' %}&tutor={{ tutor_filter }}{% endif %}"
+               class="btn-teal" style="margin-left:auto;">
+                <i class="bi bi-download"></i> Export CSV
+            </a>
+        </div>
+    </div>
+</form>
+
+<!-- Reviews Table -->
+<div class="admin-card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Reviewer</th>
+                <th>Tutor</th>
+                <th>Session</th>
+                <th>Type</th>
+                <th>Rating</th>
+                <th>Recommended</th>
+                <th>Tags</th>
+                <th>Comment</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for review in reviews %}
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <img src="{{ review.reviewer.profile.avatar_url }}"
+                             style="width:30px;height:30px;border-radius:50%;object-fit:cover;">
+                        <span style="font-size:0.85rem;font-weight:600;color:#2D3748;">
+                            {{ review.reviewer.get_full_name }}
+                        </span>
+                    </div>
+                </td>
+                <td style="font-size:0.85rem;font-weight:500;color:#2D3748;">
+                    {{ review.tutor.get_full_name }}
+                </td>
+                <td style="font-size:0.82rem;color:#6c757d;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    {{ review.session.title }}
+                </td>
+                <td style="font-size:0.82rem;color:#6c757d;">
+                    <span class="tag-pill" style="background:rgba(99,102,241,0.12);color:#4F46E5;border-radius:4px;padding:3px 8px;">
+                        {{ review.session.session_type|title }}
+                    </span>
+                </td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        {% for i in "12345" %}
+                        <i class="bi bi-star{% if forloop.counter <= review.rating %}-fill star-filled{% else %} star-empty{% endif %}"
+                           style="font-size:0.75rem;"></i>
+                        {% endfor %}
+                        <span style="font-size:0.78rem;color:#6c757d;margin-left:2px;">{{ review.rating }}</span>
+                    </div>
+                </td>
+                <td>
+                    {% if review.recommended %}
+                    <span class="recommend-yes">✅ Yes</span>
+                    {% else %}
+                    <span class="recommend-no">❌ No</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% for tag in review.tags %}
+                    <span class="tag-pill tag-{{ tag }}">{{ tag }}</span>
+                    {% empty %}
+                    <span style="color:#adb5bd;font-size:0.78rem;">—</span>
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if review.comment %}
+                    <div class="comment-cell"
+                         onclick="showComment('{{ review.comment|escapejs }}', '{{ review.reviewer.get_full_name|escapejs }}')"
+                         title="Click to read full comment">
+                        {{ review.comment }}
+                    </div>
+                    {% else %}
+                    <span style="color:#adb5bd;font-size:0.78rem;">—</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:0.82rem;color:#6c757d;white-space:nowrap;">
+                    {{ review.created_at|date:"M d, Y" }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align:center;padding:40px;color:#adb5bd;">
+                    <i class="bi bi-star" style="font-size:2rem;display:block;margin-bottom:10px;"></i>
+                    No reviews found
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Comment Full Modal -->
+<div class="comment-modal-overlay" id="commentModalOverlay">
+    <div class="comment-modal">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h5 style="margin:0;font-weight:700;color:#2D3748;">
+                <i class="bi bi-chat-quote" style="color:#4ECDC4;"></i>
+                Review by <span id="commentReviewer"></span>
+            </h5>
+            <button onclick="closeComment()" class="btn-sm-outline" style="padding:4px 10px;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <p id="commentText" style="color:#555;font-size:0.92rem;line-height:1.7;margin:0;"></p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+// Initialize tags count on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateTagsCount();
+});
+
+// Tag Filter Toggle
+function toggleTagFilter(event) {
+    event.preventDefault();
+    const toggle = document.getElementById('tagFilterToggle');
+    const dropdown = document.getElementById('tagFilterDropdown');
+    
+    toggle.classList.toggle('active');
+    dropdown.classList.toggle('show');
+}
+
+// Update tags count badge
+function updateTagsCount() {
+    const checkboxes = document.querySelectorAll('input[name="tags"]:checked');
+    const countBadge = document.getElementById('tagsCount');
+    
+    if (checkboxes.length > 0) {
+        countBadge.textContent = checkboxes.length;
+        countBadge.style.display = 'inline-flex';
+    } else {
+        countBadge.style.display = 'none';
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const container = document.querySelector('.tag-filter-container');
+    if (container && !container.contains(event.target)) {
+        const toggle = document.getElementById('tagFilterToggle');
+        const dropdown = document.getElementById('tagFilterDropdown');
+        toggle.classList.remove('active');
+        dropdown.classList.remove('show');
+    }
+});
+
+// Comment modal functions
+function showComment(comment, reviewer) {
+    document.getElementById('commentReviewer').textContent = reviewer;
+    document.getElementById('commentText').textContent     = comment;
+    document.getElementById('commentModalOverlay').classList.add('show');
+}
+
+function closeComment() {
+    document.getElementById('commentModalOverlay').classList.remove('show');
+}
+
+document.getElementById('commentModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeComment();
+});
+</script>
+{% endblock %}

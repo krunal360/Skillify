@@ -1,0 +1,239 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        .navbar { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .navbar-brand { font-weight: 700; font-size: 1.4rem; }
+        .navbar-brand i { color: #667eea; }
+
+        .page-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 0; color: #fff;
+        }
+
+        .notif-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+            margin-bottom: 8px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: block;
+            color: inherit;
+        }
+        .notif-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 18px rgba(102,126,234,0.12);
+            color: inherit;
+        }
+        .notif-card.unread {
+            border-left: 4px solid #667eea;
+            background: rgba(102,126,234,0.03);
+        }
+        .notif-inner {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 20px;
+        }
+        .notif-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1rem;
+        }
+        .notif-body { flex: 1; min-width: 0; }
+        .notif-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #2D3748;
+            margin-bottom: 3px;
+        }
+        .notif-title.read { font-weight: 500; color: #555; }
+        .notif-message {
+            font-size: 0.83rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+        .notif-time {
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+        .unread-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #667eea;
+            flex-shrink: 0;
+            margin-top: 6px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        .empty-state i { font-size: 3.5rem; color: #dee2e6; display: block; margin-bottom: 14px; }
+        .filter-btn {
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 2px solid #e9ecef;
+            background: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'index' %}">
+            <i class="bi bi-lightbulb-fill"></i> Skillify
+        </a>
+        <div class="ms-auto d-flex gap-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<div class="page-hero">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h1 class="fw-bold mb-1" style="font-size:1.8rem;">
+                    <i class="bi bi-bell-fill"></i> Notifications
+                </h1>
+                <p class="mb-0" style="opacity:0.85;">
+                    {% if unread_count > 0 %}
+                        You have <strong>{{ unread_count }}</strong> unread notification{{ unread_count|pluralize }}
+                    {% else %}
+                        You're all caught up!
+                    {% endif %}
+                </p>
+            </div>
+            {% if unread_count > 0 %}
+            <form method="POST" action="{% url 'notifications_mark_all_read' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-light fw-bold">
+                    <i class="bi bi-check-all"></i> Mark All as Read
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+
+    <!-- Filter buttons -->
+    <div class="d-flex gap-2 flex-wrap mb-4">
+        <button class="filter-btn active" onclick="filterNotifs('all', this)">
+            All <span class="ms-1 badge bg-secondary" style="font-size:0.7rem;">{{ notifications|length }}</span>
+        </button>
+        <button class="filter-btn" onclick="filterNotifs('unread', this)">
+            Unread <span class="ms-1 badge bg-primary" style="font-size:0.7rem;">{{ unread_count }}</span>
+        </button>
+        <button class="filter-btn" onclick="filterNotifs('session', this)">
+            <i class="bi bi-calendar-check"></i> Sessions
+        </button>
+        <button class="filter-btn" onclick="filterNotifs('review', this)">
+            <i class="bi bi-star"></i> Reviews
+        </button>
+        <button class="filter-btn" onclick="filterNotifs('credits', this)">
+            <i class="bi bi-coin"></i> Credits
+        </button>
+        <button class="filter-btn" onclick="filterNotifs('message', this)">
+            <i class="bi bi-chat-dots"></i> Messages
+        </button>
+    </div>
+
+    <!-- Notifications list -->
+    <div id="notifContainer">
+        {% if notifications %}
+            {% for n in notifications %}
+            <a href="{% url 'notification_mark_read' n.pk %}"
+               class="notif-card {% if not n.is_read %}unread{% endif %}"
+               data-type="{{ n.notification_type }}"
+               data-read="{{ n.is_read|yesno:'true,false' }}">
+                <div class="notif-inner">
+                    <!-- Icon -->
+                    <div class="notif-icon bg-{{ n.color }} bg-opacity-10">
+                        <i class="bi {{ n.icon }} text-{{ n.color }}" style="font-size:1.1rem;"></i>
+                    </div>
+                    <!-- Body -->
+                    <div class="notif-body">
+                        <div class="notif-title {% if n.is_read %}read{% endif %}">{{ n.title }}</div>
+                        <div class="notif-message">{{ n.message }}</div>
+                        <div class="notif-time">
+                            <i class="bi bi-clock"></i> {{ n.created_at|timesince }} ago
+                        </div>
+                    </div>
+                    <!-- Unread dot -->
+                    {% if not n.is_read %}
+                    <div class="unread-dot"></div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="bi bi-bell-slash"></i>
+                <p class="fw-bold">No notifications yet</p>
+                <p class="small">When something happens — bookings, reviews, messages — you'll see it here.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function filterNotifs(type, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.querySelectorAll('.notif-card').forEach(card => {
+        if (type === 'all') {
+            card.style.display = 'block';
+        } else if (type === 'unread') {
+            card.style.display = card.dataset.read === 'false' ? 'block' : 'none';
+        } else if (type === 'session') {
+            card.style.display = card.dataset.type.includes('session') || card.dataset.type.includes('reschedule') ? 'block' : 'none';
+        } else if (type === 'review') {
+            card.style.display = card.dataset.type === 'review_received' ? 'block' : 'none';
+        } else if (type === 'credits') {
+            card.style.display = card.dataset.type === 'credits_received' ? 'block' : 'none';
+        } else if (type === 'message') {
+            card.style.display = card.dataset.type === 'message_received' ? 'block' : 'none';
+        }
+    });
+}
+</script>
+</body>
+</html>

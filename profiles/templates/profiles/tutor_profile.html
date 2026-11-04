@@ -1,0 +1,1100 @@
+{% load static %} {% load dict_filters %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tutor_user.get_full_name }} - Tutor Profile | Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+        }
+
+        .profile-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 0 30px;
+            color: #fff;
+        }
+
+        .profile-avatar-lg {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #fff;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .trust-badge-lg {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin: 4px;
+        }
+
+        .video-embed-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-embed-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 12px;
+        }
+
+        .video-link-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.2s;
+        }
+
+        .video-link-card:hover {
+            transform: translateY(-2px);
+            color: inherit;
+        }
+
+        .video-link-icon {
+            font-size: 2.5rem;
+            color: #dc3545;
+        }
+
+        .review-card {
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 0 12px 12px 0;
+            background: #fafbfc;
+            margin-bottom: 12px;
+        }
+
+        .review-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+        }
+
+        .link-item:hover {
+            background: #e9ecef;
+            color: #333;
+            transform: translateX(4px);
+        }
+
+        .link-item i {
+            font-size: 1.3rem;
+        }
+
+        .session-book-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .session-book-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+        }
+
+        .sticky-sidebar {
+            position: sticky;
+            top: 90px;
+        }
+
+        /* ===== Certificates ===== */
+        .cert-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        .cert-row:hover {
+            background: #f0f0ff;
+            border-color: #667eea;
+        }
+
+        .cert-row-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .cert-row-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cert-row-info strong {
+            display: block;
+            font-size: 0.9rem;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cert-row-info small {
+            color: #6c757d;
+            font-size: 0.78rem;
+        }
+
+        .cert-row-link {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cert-row-link:hover {
+            color: #764ba2;
+        }
+
+        /* ===== Preply Calendar ===== */
+        .week-tab-btn {
+            padding: 5px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 2px solid #e9ecef;
+            background: #fff;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .week-tab-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .preply-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .preply-day {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            min-width: 60px;
+        }
+
+        .preply-day.today {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.18);
+        }
+
+        .preply-day-hd {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 2px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            gap: 3px;
+        }
+
+        .preply-day-name {
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .preply-day-num {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .preply-day-num.today-num {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        .preply-slots {
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-height: 48px;
+            flex: 1;
+        }
+
+        .preply-no-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: #ced4da;
+            font-size: 1rem;
+        }
+
+        .preply-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+            padding: 4px 2px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.18s;
+            border: 1.5px solid transparent;
+            text-align: center;
+        }
+
+        .preply-slot:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .preply-slot.green {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #065F46;
+        }
+
+        .preply-slot.green:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .preply-slot.red {
+            background: rgba(239, 68, 68, 0.07);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #991B1B;
+            cursor: not-allowed;
+        }
+
+        .preply-slot.red:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .preply-slot.blue {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: rgba(102, 126, 234, 0.4);
+            color: #3730a3;
+        }
+
+        .preply-slot-time {
+            font-size: 0.65rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .preply-slot-spots {
+            font-size: 0.55rem;
+            opacity: 0.85;
+        }
+
+        /* ===== Session Modal ===== */
+        .session-modal-hd {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border-radius: 16px 16px 0 0;
+            padding: 18px 24px;
+            position: relative;
+        }
+
+        .msi-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .msi-row:last-child {
+            border-bottom: none;
+        }
+
+        .msi-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6c757d;
+            font-size: 0.88rem;
+        }
+
+        .msi-label i {
+            color: #667eea;
+        }
+
+        .msi-val {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .msi-credits {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #667eea;
+        }
+
+        .msi-booked {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.1);
+            color: #1E40AF;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            margin-top: 10px;
+            font-size: 0.88rem;
+        }
+
+        .msi-full {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            background: rgba(239, 68, 68, 0.08);
+            color: #991B1B;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            margin-top: 10px;
+            font-size: 0.88rem;
+        }
+
+        .btn-book-now {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 22px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            border: none;
+            transition: all 0.2s;
+            font-size: 0.92rem;
+            cursor: pointer;
+        }
+
+        .btn-book-now:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i
+            class="bi bi-moon-stars-fill"></i></button>
+
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top"
+        style="background:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}"><i class="bi bi-lightbulb-fill"
+                    style="color:#667eea;"></i><span class="fw-bold ms-1">Skillify</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span
+                    class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+                    {% if user.is_authenticated and user.profile.role == 'learner' %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'browse_skills' %}">Browse Skills</a></li>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="{{ user.profile.avatar_url }}" alt="User"
+                                style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'edit_tutor_profile' %}"><i
+                                        class="bi bi-pencil-square"></i> Edit Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'wallet' %}"><i class="bi bi-wallet2"></i>
+                                    Wallet</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i
+                                        class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== PROFILE HERO ===== -->
+    <div class="profile-hero">
+        <div class="container">
+            <a href="{% url 'dashboard' %}" class="text-white text-decoration-none mb-3 d-inline-block"
+                style="opacity:0.8;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+            <div class="row align-items-center mt-3">
+                <div class="col-md-auto text-center text-md-start mb-3 mb-md-0">
+                    <img src="{{ profile.avatar_url }}" alt="{{ tutor_user.get_full_name }}" class="profile-avatar-lg">
+                </div>
+                <div class="col-md">
+                    <h1 class="fw-bold mb-1" style="font-size:2rem;">{{ tutor_user.get_full_name }}</h1>
+                    <p class="mb-3" style="opacity:0.9;font-size:1.1rem;">{{ profile.expertise|default:"Skillify Tutor"}}</p>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span class="trust-badge-lg">
+                            <i class="bi bi-shield-check-fill"></i> Trust Score: {{ profile.trust_score|floatformat:0 }}
+                        </span>
+                        <span class="stat-pill">
+                            <i class="bi bi-star-fill text-warning"></i> {{ avg_rating }} ({{ review_count }} reviews)
+                        </span>
+                        <span class="stat-pill">
+                            <i class="bi bi-calendar-check"></i> {{ sessions.count }} upcoming
+                        </span>
+                    </div>
+                </div>
+                {% if user.is_authenticated and user.pk == tutor_user.pk %}
+                <div class="col-md-auto mt-3 mt-md-0">
+                    <a href="{% url 'edit_tutor_profile' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-pencil-square"></i> Edit My Profile
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="container py-4" style="margin-top:-20px;">
+        <div class="row g-4">
+            <div class="col-lg-8">
+
+                <!-- ===== ABOUT ME ===== -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-person"></i> About Me</h4>
+                        <p class="mb-0" style="line-height:1.8;color:#555;">{{ profile.bio|default:"This tutor hasn't added a bio yet."|linebreaksbr }}</p>
+                    </div>
+                </div>
+
+                <!-- ===== WEEKLY CALENDAR ===== -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-calendar3"></i> Available Sessions</h4>
+                        <p class="text-muted small mb-3">Click a slot to view details
+                            {% if  user.is_authenticated and user != tutor_user %}
+                             and book
+                            {% endif %}</p>
+
+                        <!-- Legend -->
+                        <div class="d-flex gap-3 mb-3 flex-wrap">
+                            <span class="d-flex align-items-center gap-1"
+                                style="font-size:0.8rem;font-weight:600;color:#6c757d;">
+                                <span
+                                    style="width:10px;height:10px;border-radius:50%;background:#10B981;display:inline-block;"></span>
+                                Available
+                            </span>
+                            <span class="d-flex align-items-center gap-1"
+                                style="font-size:0.8rem;font-weight:600;color:#6c757d;">
+                                <span
+                                    style="width:10px;height:10px;border-radius:50%;background:#EF4444;display:inline-block;"></span>
+                                Full
+                            </span>
+                            {% if user.is_authenticated and user != tutor_user %}
+                            <span class="d-flex align-items-center gap-1"
+                                style="font-size:0.8rem;font-weight:600;color:#6c757d;">
+                                <span
+                                    style="width:10px;height:10px;border-radius:50%;background:#667eea;display:inline-block;"></span>
+                                Booked by you
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Week Tabs -->
+                        <div class="d-flex gap-2 mb-3 flex-wrap">
+                            {% for week in calendar_data %}
+                            <button class="week-tab-btn {% if forloop.first %}active{% endif %}"
+                                onclick="switchWeek('{{ week.week_num }}', this)">
+                                {{ week.label }}
+                            </button>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Calendar Grid -->
+                        {% for week in calendar_data %}
+                        <div id="calWeek{{ week.week_num }}" {% if not forloop.first %}style="display:none;" {% endif %}>
+                            <div class="preply-calendar">
+                                {% for day in week.days %}
+                                <div class="preply-day {% if day.is_today %}today{% endif %}">
+                                    <div class="preply-day-hd">
+                                        <div class="preply-day-name">{{ day.day_name }}</div>
+                                        <div class="preply-day-num {% if day.is_today %}today-num{% endif %}">
+                                            {{  day.day_num }}</div>
+                                    </div>
+                                    <div class="preply-slots">
+                                        {% for slot in day.sessions %}
+                                        <div class="preply-slot {{ slot.color }}"
+                                            onclick="openSessionModal('{{ slot.id }}','{{ slot.title|escapejs }}','{{ slot.skill|escapejs }}','{{ day.date }}','{{ slot.start_time }}','{{ slot.end_time }}','{{ slot.credits }}','{{ slot.type }}','{{ slot.spots_left }}','{{ slot.max_participants }}','{{ slot.color }}')">
+                                            <div class="preply-slot-time">{{ slot.start_time }}</div>
+                                            <div class="preply-slot-spots"><i class="bi bi-people-fill"></i> {{ slot.spots_left }}/{{ slot.max_participants }}</div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="preply-no-slot">—</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Create Session Button (only for profile owner) -->
+                        {% if user.is_authenticated and user.pk == tutor_user.pk %}
+                        <div class="mt-3 text-end">
+                            <a href="{% url 'create_session' %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-lg"></i> Create New Session
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ===== DEMO VIDEO (EMBEDDED) ===== -->
+                {% if profile.demo_video %}
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-play-circle"></i> Demo Video</h4>
+                        <p class="text-muted small mb-3">Watch {{ tutor_user.first_name }}'s teaching style in action
+                        </p>
+
+                        {% if embed_video_url %}
+                        <div class="video-embed-container">
+                            <iframe src="{{ embed_video_url }}"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen title="{{ tutor_user.get_full_name }} Demo Video"></iframe>
+                        </div>
+                        {% else %}
+                        <a href="{{ profile.demo_video }}" target="_blank" class="video-link-card">
+                            <i class="bi bi-play-circle-fill video-link-icon"></i>
+                            <div>
+                                <strong class="d-block">Watch Demo Video</strong>
+                                <small class="text-muted">Opens in a new tab</small>
+                            </div>
+                            <i class="bi bi-box-arrow-up-right ms-auto" style="font-size:1.2rem;color:#667eea;"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ===== SKILLS ===== -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-lightbulb"></i> Skills I Teach</h4>
+                        <div>
+                            {% for skill in profile.skills.all %}
+                            <span class="skill-tag">{{ skill.name }}</span>
+                            {% empty %}
+                            <p class="text-muted mb-0">No skills listed yet.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== CERTIFICATES ===== -->
+                {% if certificates %}
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-patch-check"></i> Certificates</h4>
+                        {% for cert in certificates %}
+                        <div class="cert-row">
+                            <div class="cert-row-icon">
+                                {% if cert.is_pdf %}
+                                <i class="bi bi-file-pdf-fill text-danger"></i>
+                                {% else %}
+                                <i class="bi bi-image-fill text-primary"></i>
+                                {% endif %}
+                            </div>
+                            <div class="cert-row-info">
+                                <strong>{{ cert.title }}</strong>
+                                <small>Uploaded {{ cert.uploaded_at|date:"M Y" }}</small>
+                            </div>
+                            <a href="{{ cert.file.url }}" target="_blank" class="cert-row-link">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ===== PORTFOLIO LINKS ===== -->
+                {% if profile.linkedin or profile.github %}
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="section-title"><i class="bi bi-link-45deg"></i> Portfolio Links</h4>
+                        {% if profile.linkedin %}
+                        <a href="{{ profile.linkedin }}" target="_blank" class="link-item">
+                            <i class="bi bi-linkedin text-primary"></i>
+                            <div>
+                                <strong>LinkedIn Profile</strong>
+                                <small class="d-block text-muted">View professional profile</small>
+                            </div>
+                            <i class="bi bi-box-arrow-up-right ms-auto"></i>
+                        </a>
+                        {% endif %}
+                        {% if profile.github %}
+                        <a href="{{ profile.github }}" target="_blank" class="link-item">
+                            <i class="bi bi-github"></i>
+                            <div>
+                                <strong>GitHub Profile</strong>
+                                <small class="d-block text-muted">View code repositories</small>
+                            </div>
+                            <i class="bi bi-box-arrow-up-right ms-auto"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ===== REVIEWS SECTION — replace existing reviews card in tutor_profile.html ===== -->
+<div class="card">
+    <div class="card-body p-4">
+        <h4 class="section-title"><i class="bi bi-chat-square-text"></i> Reviews</h4>
+
+        <!-- Rating Summary -->
+        <div class="row g-3 mb-4 align-items-center" style="background:#fff9e6;border-radius:14px;padding:18px 10px;">
+            <div class="col-auto text-center px-4">
+                <div style="font-size:3rem;font-weight:800;color:#f59e0b;line-height:1;">{{ avg_rating }}</div>
+                <div class="mb-1">
+                    {% for i in "12345" %}
+                    <i class="bi bi-star{% if forloop.counter <= avg_rating %}-fill{% endif %} text-warning"
+                        style="font-size:1rem;"></i>
+                    {% endfor %}
+                </div>
+                <small class="text-muted">{{ review_count }} review{{ review_count|pluralize }}</small>
+            </div>
+            <div class="col">
+                <!-- Rating bars -->
+                {% for star in "54321" %}
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <small style="width:14px;font-weight:700;color:#6c757d;">{{ star }}</small>
+                    <i class="bi bi-star-fill text-warning" style="font-size:0.7rem;"></i>
+                    <div class="flex-grow-1" style="background:#e9ecef;border-radius:10px;height:8px;overflow:hidden;">
+                        <div class="rating-bar-fill" data-width="{% widthratio rating_distribution|get_item:star review_count 100 %}" style="height:100%;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#f97316);width:0%;transition:width 0.5s;"></div>
+                    </div>
+                    <small style="width:20px;color:#6c757d;font-size:0.75rem;">{{ rating_distribution|get_item:star }}</small>
+                </div>
+                {% endfor %}
+            </div>
+            {% if review_count > 0 %}
+            <div class="col-auto text-center px-3">
+                <div style="font-size:1.6rem;font-weight:800;color:#10B981;">{{ recommend_percent }}%</div>
+                <small class="text-muted">would<br>recommend</small>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Tag Summary -->
+        {% if top_tags %}
+        <div class="mb-4">
+            <div style="font-size:0.85rem;font-weight:700;color:#6c757d;margin-bottom:8px;">MOST MENTIONED</div>
+            <div class="d-flex flex-wrap gap-2">
+                {% for tag, count in top_tags %}
+                <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,rgba(102,126,234,0.1),rgba(118,75,162,0.1));border:1px solid rgba(102,126,234,0.25);font-size:0.82rem;font-weight:600;color:#3730a3;">
+                    <i class="bi bi-check-circle-fill" style="color:#667eea;font-size:0.7rem;"></i>
+                    {{ tag }} <span style="background:#667eea;color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;">{{ count }}</span>
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Individual Reviews -->
+        {% for review in reviews %}
+        <div class="review-card mb-3">
+            <div class="d-flex align-items-center mb-2 gap-3">
+                <img src="{{ review.reviewer.profile.avatar_url }}"
+                     alt="{{ review.reviewer.get_full_name }}" class="review-avatar">
+                <div class="flex-grow-1">
+                    <strong>{{ review.reviewer.get_full_name }}</strong>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div>
+                            {% for i in "12345" %}
+                            <i class="bi bi-star{% if forloop.counter <= review.rating %}-fill{% endif %} text-warning"
+                                style="font-size:0.75rem;"></i>
+                            {% endfor %}
+                        </div>
+                        <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                        {% if review.recommended %}
+                        <span style="font-size:0.75rem;font-weight:700;color:#10B981;background:rgba(16,185,129,0.1);padding:2px 8px;border-radius:10px;">
+                            <i class="bi bi-hand-thumbs-up-fill"></i> Recommends
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if review.tags %}
+            <div class="mb-2 d-flex flex-wrap gap-1">
+                {% for tag in review.tag_labels %}
+                <span style="font-size:0.72rem;padding:3px 10px;border-radius:12px;background:rgba(102,126,234,0.1);color:#3730a3;font-weight:600;">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if review.comment %}
+            <p class="mb-0" style="color:#555;font-size:0.92rem;">{{ review.comment }}</p>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="text-center py-4">
+            <i class="bi bi-chat-square-text" style="font-size:2.5rem;color:#dee2e6;"></i>
+            <p class="text-muted mt-2 mb-0">No reviews yet. Be the first to learn from {{ tutor_user.first_name }}!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+            </div>
+
+            <!-- ===== RIGHT SIDEBAR ===== -->
+            <div class="col-lg-4">
+                <div class="sticky-sidebar">
+
+                    <!-- Quick Info Card -->
+                    <div class="card">
+                        <div class="card-body p-4 text-center">
+                            <img src="{{ profile.avatar_url }}" alt="{{ tutor_user.get_full_name }}"
+                                style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #667eea;"
+                                class="mb-3">
+                            <h6 class="fw-bold mb-1">{{ tutor_user.get_full_name }}</h6>
+                            <p class="text-muted small mb-2">{{ profile.expertise | default:"Skillify Tutor" }}</p>
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                <span class="badge bg-success"><i class="bi bi-shield-check"></i> {{ profile.trust_score|floatformat:0 }}</span>
+                                <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> {{ avg_rating }}</span>
+                                {% if profile.profile_picture %}
+                                <span class="badge bg-info"><i class="bi bi-camera-fill"></i> Verified Photo</span>
+                                {% endif %}
+                                {% if profile.demo_video %}
+                                <span class="badge bg-danger"><i class="bi bi-play-fill"></i> Has Video</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Available Sessions sidebar — uses /book/<id>/ URL directly, no url tag -->
+                    <div class="card">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-calendar-check" style="color:#667eea;"></i>
+                                Available Sessions</h5>
+                            {% for session in sessions %}
+                            <div class="session-book-card">
+                                <h6 class="fw-bold mb-2">{{ session.title }}</h6>
+                                <div class="mb-2">
+                                    <small class="text-muted d-block"><i class="bi bi-calendar3"></i> {{ session.date|date:"D, M d" }}</small>
+                                    <small class="text-muted d-block"><i class="bi bi-clock"></i> 
+                                        {{session.start_time|time:"g:i A" }} – {{ session.end_time|time:"g:i A" }}</small>
+                                    <small class="text-muted d-block"><i class="bi bi-tag"></i> {{ session.skill.name}}</small>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong style="color:#667eea;">{{ session.credits_required }} credits</strong>
+                                    {% if user.is_authenticated and user != tutor_user %}
+                                    {# Use hardcoded URL path to avoid namespace issues #}
+                                   <form method="POST" action="/book/{{ session.pk }}/">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-calendar-check"></i> Book Now
+                                    </button>
+                                </form>
+                                    {% elif not user.is_authenticated %}
+                                    <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-box-arrow-in-right"></i> Login to Book
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-3">
+                                <i class="bi bi-calendar-x" style="font-size:2rem;color:#dee2e6;"></i>
+                                <p class="text-muted mt-2 mb-0 small">No upcoming sessions</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                                        <!-- ===== SIMILAR TUTORS ===== -->
+                    {% if similar_tutors %}
+                    <div class="card">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-people-fill" style="color:#667eea;"></i> Similar Tutors
+                            </h5>
+                            {% for t in similar_tutors %}
+                            <a href="/profile/{{ t.user.pk }}/" class="text-decoration-none">
+                                <div class="d-flex align-items-center gap-3 p-2 mb-2 rounded-3" 
+                                    style="background:#f8f9fa;transition:all 0.2s;"
+                                    onmouseover="this.style.background='#f0f0ff'" 
+                                    onmouseout="this.style.background='#f8f9fa'">
+                                    <img src="{{ t.user.profile.avatar_url }}" 
+                                        style="width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid #667eea;">
+                                    <div class="flex-grow-1 min-width-0">
+                                        <div class="fw-bold text-dark" style="font-size:0.88rem;">{{ t.user.get_full_name }}</div>
+                                        <div class="text-muted" style="font-size:0.78rem;">{{ t.user.profile.expertise|default:"Skillify Tutor"|truncatechars:30 }}</div>
+                                        <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                                            <span class="badge bg-success" style="font-size:0.7rem;">
+                                                <i class="bi bi-shield-check"></i> {{ t.trust_score|floatformat:0 }}
+                                            </span>
+                                            {% for skill in t.skills|slice:":2" %}
+                                            <span style="font-size:0.68rem;padding:2px 8px;border-radius:10px;background:rgba(102,126,234,0.1);color:#3730a3;font-weight:600;">{{ skill }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-4" style="background:#f8f9fa;">
+        <p class="text-muted mb-0 small">&copy; 2025 Skillify. All rights reserved.</p>
+    </footer>
+
+    <!-- ===== SESSION MODAL ===== -->
+    <div class="modal fade" id="sessionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius:16px;border:none;overflow:hidden;">
+                <div class="session-modal-hd">
+                    <h5 class="fw-bold d-flex align-items-center gap-2 mb-0" style="color:#fff;">
+                        <i class="bi bi-calendar-event"></i> <span id="modalTitle">Session Details</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white"
+                        style="position:absolute;top:16px;right:20px;" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="msi-row"><span class="msi-label"><i class="bi bi-lightbulb"></i> Skill</span><span
+                            class="msi-val" id="modalSkill">—</span></div>
+                    <div class="msi-row"><span class="msi-label"><i class="bi bi-calendar3"></i> Date</span><span
+                            class="msi-val" id="modalDate">—</span></div>
+                    <div class="msi-row"><span class="msi-label"><i class="bi bi-clock"></i> Time</span><span
+                            class="msi-val" id="modalTime">—</span></div>
+                    <div class="msi-row"><span class="msi-label"><i class="bi bi-people"></i> Type</span><span
+                            class="msi-val" id="modalType">—</span></div>
+                    <div class="msi-row"><span class="msi-label"><i class="bi bi-person-check"></i> Spots
+                            Left</span><span class="msi-val" id="modalSpots">—</span></div>
+                    <div class="msi-row"
+                        style="border-bottom:none;background:rgba(102,126,234,0.06);border-radius:8px;padding:10px 12px;margin-top:4px;">
+                        <span class="msi-label"><i class="bi bi-coin"></i> Credits</span>
+                        <span class="msi-credits" id="modalCredits">—</span>
+                    </div>
+                    <div id="modalStatusBooked" class="msi-booked" style="display:none;"><i
+                            class="bi bi-check-circle-fill"></i> You have already booked this session</div>
+                    <div id="modalStatusFull" class="msi-full" style="display:none;"><i class="bi bi-x-circle-fill"></i>
+                        This session is fully booked</div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid #f0f0f0;padding:14px 24px;gap:10px;">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i
+                            class="bi bi-x"></i> Close</button>
+                    {% if user.is_authenticated and user != tutor_user %}
+                    <form method="POST" id="modalBookForm" action="#">
+                        {% csrf_token %}
+                        <button type="submit" id="modalBookBtn" class="btn-book-now">
+                            <i class="bi bi-calendar-check"></i> Book Session
+                        </button>
+                    </form>
+                    {% elif not user.is_authenticated %}
+                    <a href="{% url 'login' %}" class="btn-book-now">
+                        <i class="bi bi-box-arrow-in-right"></i> Login to Book
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/profile.js' %}"></script>
+    <script>
+        function switchWeek(weekNum, btn) {
+            document.querySelectorAll('[id^="calWeek"]').forEach(function (p) { p.style.display = 'none'; });
+            document.querySelectorAll('.week-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+            document.getElementById('calWeek' + weekNum).style.display = 'block';
+            btn.classList.add('active');
+        }
+
+        function openSessionModal(id, title, skill, date, startTime, endTime, credits, type, spotsLeft, maxParticipants, color) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalSkill').textContent = skill;
+            document.getElementById('modalDate').textContent = date;
+            document.getElementById('modalTime').textContent = startTime + ' – ' + endTime;
+            document.getElementById('modalType').textContent = type === 'one-to-one' ? 'One-to-One' : 'Group';
+            document.getElementById('modalSpots').textContent = spotsLeft + ' / ' + maxParticipants;
+            document.getElementById('modalCredits').textContent = credits + ' credits';
+
+            var bookBtn = document.getElementById('modalBookBtn');
+            var bookedMsg = document.getElementById('modalStatusBooked');
+            var fullMsg = document.getElementById('modalStatusFull');
+
+            if (bookedMsg) bookedMsg.style.display = 'none';
+            if (fullMsg) fullMsg.style.display = 'none';
+
+            if (bookBtn) {
+                if (color === 'blue') {
+                    bookBtn.style.display = 'none';
+                    if (bookedMsg) bookedMsg.style.display = 'flex';
+                } else if (color === 'red') {
+                    bookBtn.style.display = 'none';
+                    if (fullMsg) fullMsg.style.display = 'flex';
+                } else {
+                    var userBalance = parseInt(document.getElementById('userBalance')?.dataset.balance || 0);
+                    var sessionCredits = parseInt(credits);
+
+                    var oldAlert = document.getElementById('modalInsufficientAlert');
+                    if (oldAlert) oldAlert.remove();
+
+                    if (userBalance < sessionCredits) {
+                        bookBtn.style.display = 'none';
+                        var alertDiv = document.createElement('div');
+                        alertDiv.id = 'modalInsufficientAlert';
+                        alertDiv.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;font-weight:600;background:rgba(239,68,68,0.08);color:#991B1B;border:1px solid rgba(239,68,68,0.2);margin-top:10px;font-size:0.88rem;';
+                        alertDiv.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> Insufficient credits! You have ' + userBalance + ' but need ' + sessionCredits + ' credits. <a href="/wallet/" style="color:#667eea;margin-left:4px;">Top up</a>';
+                        document.querySelector('.modal-body').appendChild(alertDiv);
+                    } else {
+                        bookBtn.style.display = 'inline-flex';
+                        document.getElementById('modalBookForm').action = '/book/' + id + '/';
+                    }
+                }
+            }
+            new bootstrap.Modal(document.getElementById('sessionModal')).show();
+        }
+
+    // Animate rating bars
+        document.querySelectorAll('.rating-bar-fill').forEach(function (bar) {
+            var width = bar.dataset.width;
+            setTimeout(function () {
+                bar.style.width = width + '%';
+            }, 100);
+        });
+    </script>
+    {% if user.is_authenticated %}
+    <span id="userBalance" data-balance="{{ wallet.balance }}"></span>
+    {% endif %}
+
+    // Animate rating bars
+
+</body>
+
+</html>

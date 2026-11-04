@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login — Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+            padding: 24px;
+        }
+
+        .login-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px 36px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #4ECDC4, #3BABA3);
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .logo-icon i {
+            font-size: 1.6rem;
+            color: #fff;
+        }
+
+        .logo-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #2D3748;
+            margin-bottom: 4px;
+        }
+
+        .logo-subtitle {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2D3748;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 11px 14px;
+            font-size: 0.92rem;
+            color: #2D3748;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4ECDC4;
+            box-shadow: 0 0 0 3px rgba(78,205,196,0.15);
+        }
+
+        .input-group-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        .input-group-wrapper .form-control {
+            padding-left: 38px;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4ECDC4, #3BABA3);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(78,205,196,0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .alert-error {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: #dc2626;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .divider {
+            height: 1px;
+            background: #f0f4f8;
+            margin: 28px 0;
+        }
+
+        .admin-note {
+            text-align: center;
+            font-size: 0.78rem;
+            color: #adb5bd;
+        }
+
+        .admin-note i {
+            color: #4ECDC4;
+        }
+
+        .mb-4 { margin-bottom: 16px; }
+        .mb-3 { margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+    <div class="login-card">
+
+        <!-- Logo -->
+        <div class="logo-section">
+            <div class="logo-icon">
+                <i class="bi bi-lightbulb-fill"></i>
+            </div>
+            <div class="logo-title">Skillify</div>
+            <div class="logo-subtitle">Admin Panel</div>
+        </div>
+
+        <!-- Error messages -->
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert-error">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Login Form -->
+        <form method="POST" action="{% url 'admin_login' %}">
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <label class="form-label">Username</label>
+                <div class="input-group-wrapper">
+                    <i class="bi bi-person-fill input-icon"></i>
+                    <input type="text" name="username" class="form-control"
+                           placeholder="Enter your username"
+                           value="{{ request.POST.username|default:'' }}"
+                           autocomplete="username" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Password</label>
+                <div class="input-group-wrapper">
+                    <i class="bi bi-lock-fill input-icon"></i>
+                    <input type="password" name="password" class="form-control"
+                           placeholder="Enter your password"
+                           autocomplete="current-password" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login">
+                <i class="bi bi-box-arrow-in-right"></i> Login to Admin Panel
+            </button>
+        </form>
+
+        <div class="divider"></div>
+
+        <div class="admin-note">
+            <i class="bi bi-shield-lock-fill"></i>
+            Restricted access — admin accounts only.
+            <br>Contact superuser to get access.
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

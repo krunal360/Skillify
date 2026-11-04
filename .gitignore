@@ -1,0 +1,63 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Local Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# Database
+db.sqlite3
+db.sqlite3-journal
+*.db
+*.sqlite3
+
+# User Media Uploads (keep directory structure with .gitkeep)
+media/profile_pics/*
+!media/profile_pics/.gitkeep
+media/certificates/*
+!media/certificates/.gitkeep
+media/disputes/*
+!media/disputes/.gitkeep
+media/messaging/*
+!media/messaging/.gitkeep
+
+# Editor & IDE settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary, Scratch & Documentation working files
+*.log
+scratch/
+Skillify_Presentation*.pptx
+Skillify_*Report*.docx
+Skillify_*Report*.pdf
+*.jpeg
+*.jpg
+*.png
+website_details.txt
+admin panel.txt
+trust score.txt
+new_chat.txt
+abc.txt
+i.txt
+skillify_project_setup.txt
+

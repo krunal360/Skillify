@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages | Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        .navbar { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .page-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 0 60px; color: #fff; }
+        .inbox-card { background: #fff; border-radius: 16px; box-shadow: 0 2px 15px rgba(0,0,0,0.06); overflow: hidden; margin-top: -30px; }
+        .conv-item { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid #f0f0f0; text-decoration: none; color: inherit; transition: background 0.2s; cursor: pointer; }
+        .conv-item:hover { background: #f8f9fa; }
+        .conv-item.active { background: rgba(102,126,234,0.06); border-left: 3px solid #667eea; }
+        .conv-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        .conv-name { font-weight: 700; font-size: 0.95rem; color: #2D3748; }
+        .conv-preview { font-size: 0.82rem; color: #6c757d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .conv-time { font-size: 0.75rem; color: #adb5bd; white-space: nowrap; }
+        .unread-badge { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+        .empty-state { text-align: center; padding: 60px 20px; }
+        .empty-state i { font-size: 3.5rem; color: #dee2e6; }
+        .empty-state p { color: #6c757d; margin-top: 16px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'index' %}">
+            <i class="bi bi-lightbulb-fill" style="color:#667eea;"></i> Skillify
+        </a>
+        <div class="ms-auto d-flex gap-2 align-items-center">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-grid"></i> Dashboard
+            </a>
+            <a href="{% url 'my_sessions' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-calendar-week"></i> My Sessions
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="fw-bold mb-1" style="font-size:1.8rem;">
+            <i class="bi bi-chat-dots"></i> Messages
+        </h1>
+        <p class="mb-0" style="opacity:0.85;">
+            {% if total_unread > 0 %}
+            You have {{ total_unread }} unread message{{ total_unread|pluralize }}
+            {% else %}
+            All caught up!
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="container py-4" style="max-width:700px;">
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="inbox-card">
+        {% if conversations %}
+        {% for item in conversations %}
+        <a href="{% url 'conversation' item.conversation.pk %}" class="conv-item">
+            <img src="{{ item.other.profile.avatar_url }}" alt="{{ item.other.get_full_name }}" class="conv-avatar">
+            <div class="flex-grow-1 min-width-0">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="conv-name">{{ item.other.get_full_name }}</span>
+                    <span class="conv-time">
+                        {% if item.last_message %}
+                        {{ item.last_message.created_at|timesince }} ago
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="conv-preview">
+                        {% if item.last_message %}
+                            {% if item.last_message.sender == request.user %}You: {% endif %}
+                            {% if item.last_message.content %}
+                                {{ item.last_message.content|truncatechars:50 }}
+                            {% elif item.last_message.file_type == 'image' %}
+                                📷 Image
+                            {% else %}
+                                📎 File attachment
+                            {% endif %}
+                        {% else %}
+                            No messages yet
+                        {% endif %}
+                    </span>
+                    {% if item.unread > 0 %}
+                    <span class="unread-badge">{{ item.unread }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-chat-dots"></i>
+            <p>No conversations yet.<br>Book a session to start messaging!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<footer class="text-center py-4 mt-4" style="background:#f8f9fa;">
+    <p class="text-muted mb-0 small">&copy; 2025 Skillify. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

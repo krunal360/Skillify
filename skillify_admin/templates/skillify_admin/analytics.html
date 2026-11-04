@@ -1,0 +1,345 @@
+{% extends 'skillify_admin/base.html' %}
+{% block title %}Analytics{% endblock %}
+
+{% block extra_style %}
+<style>
+.chart-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    height: 100%;
+}
+.chart-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #2D3748;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.chart-title i { color: #4ECDC4; }
+.chart-wrap { position: relative; height: 260px; }
+
+.top-tutor-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f4f8;
+}
+.top-tutor-row:last-child { border-bottom: none; }
+.rank-badge {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #4ECDC4; color: #fff;
+    font-size: 0.72rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.rank-badge.gold   { background: #F59E0B; }
+.rank-badge.silver { background: #9CA3AF; }
+.rank-badge.bronze { background: #D97706; }
+.tutor-info { flex: 1; min-width: 0; }
+.tutor-info .tname { font-size: 0.85rem; font-weight: 600; color: #2D3748; }
+.tutor-info .tsub  { font-size: 0.75rem; color: #adb5bd; }
+.tutor-earned { font-size: 0.9rem; font-weight: 700; color: #10B981; }
+
+.grid-2   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-full { margin-bottom: 16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-bar-chart-line-fill"></i> Analytics</h1>
+    <p>Platform performance and insights</p>
+</div>
+
+<!-- Row 1 -->
+<div class="grid-2">
+    <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-people-fill"></i> User Growth (Weekly)</div>
+        <div class="chart-wrap"><canvas id="userGrowthChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-bookmark-fill"></i> Booking Trend (Weekly)</div>
+        <div class="chart-wrap"><canvas id="bookingTrendChart"></canvas></div>
+    </div>
+</div>
+
+<!-- Row 2 -->
+<div class="grid-2">
+    <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-lightbulb-fill"></i> Skill Popularity</div>
+        <div class="chart-wrap"><canvas id="skillPopChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-trophy-fill"></i> Top Tutors by Earnings</div>
+        {% for t in top_tutors %}
+        <div class="top-tutor-row">
+            <div class="rank-badge {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">
+                {{ forloop.counter }}
+            </div>
+            <img src="{{ t.user.profile.avatar_url }}"
+                 style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+            <div class="tutor-info">
+                <div class="tname">{{ t.user.get_full_name }}</div>
+                <div class="tsub">{{ t.sessions }} sessions &nbsp;·&nbsp; Trust: {{ t.trust }}/100</div>
+            </div>
+            <div class="tutor-earned">+{{ t.total_earned }} cr</div>
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:30px;color:#adb5bd;">No earnings data yet</div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Row 3 -->
+<div class="grid-2">
+    <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-shield-fill"></i> Trust Score Distribution</div>
+        <div class="chart-wrap"><canvas id="trustDistChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-pie-chart-fill"></i> Session Completion Rate</div>
+        <div style="display:flex;align-items:center;justify-content:center;height:200px;">
+            <canvas id="sessionDonutChart" style="max-width:200px;max-height:200px;"></canvas>
+        </div>
+        <div style="display:flex;justify-content:center;gap:20px;margin-top:8px;flex-wrap:wrap;">
+            <span style="font-size:0.78rem;font-weight:600;color:#4ECDC4;">● Completed ({{ completed }})</span>
+            <span style="font-size:0.78rem;font-weight:600;color:#EF4444;">● Cancelled ({{ cancelled }})</span>
+            <span style="font-size:0.78rem;font-weight:600;color:#F59E0B;">● Upcoming ({{ upcoming }})</span>
+        </div>
+    </div>
+</div>
+
+<!-- Row 4 -->
+<div class="grid-full">
+    <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-currency-exchange"></i> Credit Flow (Weekly)</div>
+        <div class="chart-wrap"><canvas id="creditFlowChart"></canvas></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<!-- Inject all Django data as a JSON block BEFORE Chart.js loads -->
+<script id="chartDataBlock" type="application/json">
+{
+    "userGrowthLabels":   {{ user_growth_labels|safe }},
+    "userGrowthData":     {{ user_growth_data|safe }},
+    "bookingLabels":      {{ booking_trend_labels|safe }},
+    "bookingData":        {{ booking_trend_data|safe }},
+    "skillLabels":        {{ skill_pop_labels|safe }},
+    "skillData":          {{ skill_pop_data|safe }},
+    "trustLabels":        {{ trust_labels|safe }},
+    "trustData":          {{ trust_data|safe }},
+    "creditLabels":       {{ credit_labels|safe }},
+    "creditsEarned":      {{ credits_earned|safe }},
+    "creditsSpent":       {{ credits_spent|safe }},
+    "completed":          {{ completed }},
+    "cancelled":          {{ cancelled }},
+    "upcoming":           {{ upcoming }}
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Parse all chart data from the JSON block — guarantees proper JS arrays
+const cd = JSON.parse(document.getElementById('chartDataBlock').textContent);
+
+const teal   = '#4ECDC4';
+const pink   = '#EC4899';
+const amber  = '#F59E0B';
+const red    = '#EF4444';
+const gc     = 'rgba(0,0,0,0.05)';
+const lc     = '#6c757d';
+
+const xTicks = {
+    color: lc,
+    font: { size: 10 },
+    maxRotation: 0,
+    autoSkip: true,
+    maxTicksLimit: 8,
+};
+const yTicks = {
+    color: lc,
+    font: { size: 10 },
+    precision: 0,
+};
+
+// 1. User Growth
+new Chart(document.getElementById('userGrowthChart'), {
+    type: 'bar',
+    data: {
+        labels: cd.userGrowthLabels,
+        datasets: [{
+            data: cd.userGrowthData,
+            backgroundColor: teal,
+            borderRadius: 5,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { color: gc }, ticks: xTicks },
+            y: { grid: { color: gc }, ticks: yTicks, beginAtZero: true },
+        },
+    },
+});
+
+// 2. Booking Trend
+new Chart(document.getElementById('bookingTrendChart'), {
+    type: 'line',
+    data: {
+        labels: cd.bookingLabels,
+        datasets: [{
+            data: cd.bookingData,
+            borderColor: pink,
+            backgroundColor: 'rgba(236,72,153,0.08)',
+            borderWidth: 2.5,
+            pointBackgroundColor: pink,
+            pointRadius: 4,
+            tension: 0.4,
+            fill: true,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { color: gc }, ticks: xTicks },
+            y: { grid: { color: gc }, ticks: yTicks, beginAtZero: true },
+        },
+    },
+});
+
+// 3. Skill Popularity (horizontal bar)
+new Chart(document.getElementById('skillPopChart'), {
+    type: 'bar',
+    data: {
+        labels: cd.skillLabels,
+        datasets: [{
+            data: cd.skillData,
+            backgroundColor: teal,
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                grid: { color: gc },
+                ticks: { color: lc, font: { size: 10 }, precision: 0 },
+                beginAtZero: true,
+            },
+            y: {
+                grid: { display: false },
+                ticks: {
+                    color: lc,
+                    font: { size: 10 },
+                    autoSkip: false,
+                },
+            },
+        },
+    },
+});
+
+// 4. Trust Score Distribution
+new Chart(document.getElementById('trustDistChart'), {
+    type: 'bar',
+    data: {
+        labels: cd.trustLabels,
+        datasets: [{
+            data: cd.trustData,
+            backgroundColor: ['#adb5bd','#4ECDC4','#3B82F6','#F59E0B','#10B981','#8B5CF6'],
+            borderRadius: 5,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false }, ticks: { color: lc, font: { size: 10 } } },
+            y: { grid: { color: gc }, ticks: yTicks, beginAtZero: true },
+        },
+    },
+});
+
+// 5. Session Completion Donut
+new Chart(document.getElementById('sessionDonutChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Completed', 'Cancelled', 'Upcoming'],
+        datasets: [{
+            data: [cd.completed, cd.cancelled, cd.upcoming],
+            backgroundColor: [teal, red, amber],
+            borderWidth: 0,
+            hoverOffset: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: { legend: { display: false } },
+    },
+});
+
+// 6. Credit Flow
+new Chart(document.getElementById('creditFlowChart'), {
+    type: 'line',
+    data: {
+        labels: cd.creditLabels,
+        datasets: [
+            {
+                label: 'Credits Earned',
+                data: cd.creditsEarned,
+                borderColor: teal,
+                backgroundColor: 'rgba(78,205,196,0.08)',
+                borderWidth: 2.5,
+                pointBackgroundColor: teal,
+                pointRadius: 4,
+                tension: 0.4,
+                fill: true,
+            },
+            {
+                label: 'Credits Spent',
+                data: cd.creditsSpent,
+                borderColor: pink,
+                backgroundColor: 'rgba(236,72,153,0.06)',
+                borderWidth: 2.5,
+                pointBackgroundColor: pink,
+                pointRadius: 4,
+                tension: 0.4,
+                fill: true,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+                labels: { color: lc, font: { size: 11 }, boxWidth: 12, padding: 16 },
+            },
+        },
+        scales: {
+            x: { grid: { color: gc }, ticks: xTicks },
+            y: { grid: { color: gc }, ticks: yTicks, beginAtZero: true },
+        },
+    },
+});
+</script>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Dispute - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        .navbar { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .navbar-brand { font-weight: 700; font-size: 1.4rem; }
+        .navbar-brand i { color: #667eea; }
+        .page-hero {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            padding: 40px 0; color: #fff;
+        }
+        .card { border: none; border-radius: 16px; box-shadow: 0 2px 15px rgba(0,0,0,0.06); }
+        .form-label { font-weight: 600; color: #2D3748; font-size: 0.88rem; }
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0; border-radius: 10px;
+            padding: 10px 14px; transition: all 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #EF4444;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            border: none; border-radius: 10px; color: #fff;
+            font-weight: 700; padding: 12px 28px;
+            transition: all 0.2s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239,68,68,0.3);
+            color: #fff;
+        }
+        .session-info-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+        .evidence-box {
+            background: rgba(239,68,68,0.04);
+            border: 2px dashed rgba(239,68,68,0.3);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .warning-box {
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            color: #92400E;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'index' %}">
+            <i class="bi bi-lightbulb-fill"></i> Skillify
+        </a>
+        <div class="ms-auto">
+            <a href="{% url 'my_sessions' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to My Sessions
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="fw-bold mb-1" style="font-size:1.8rem;">
+            <i class="bi bi-flag-fill"></i> File a Dispute
+        </h1>
+        <p class="mb-0" style="opacity:0.85;">
+            Report an issue with your session — admin will review within 24 hours
+        </p>
+    </div>
+</div>
+
+<div class="container py-4" style="max-width:700px;">
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Session Info -->
+    <div class="session-info-card">
+        <div style="font-size:0.78rem;font-weight:700;color:#adb5bd;text-transform:uppercase;margin-bottom:8px;">Session Details</div>
+        <div class="fw-bold" style="font-size:1rem;color:#2D3748;">{{ booking.session.title }}</div>
+        <div style="font-size:0.85rem;color:#6c757d;margin-top:4px;">
+            <i class="bi bi-calendar3"></i> {{ booking.session.date|date:"D, M d, Y" }}
+            &nbsp;·&nbsp;
+            <i class="bi bi-clock"></i> {{ booking.session.start_time|time:"g:i A" }}
+            &nbsp;·&nbsp;
+            <i class="bi bi-lightbulb"></i> {{ booking.session.skill.name }}
+        </div>
+        <div style="font-size:0.85rem;color:#6c757d;margin-top:4px;">
+            {% if is_learner %}
+            <i class="bi bi-person-video3"></i> Tutor: {{ booking.session.tutor.get_full_name }}
+            {% else %}
+            <i class="bi bi-person"></i> Learner: {{ booking.learner.get_full_name }}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Warning -->
+    <div class="warning-box">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <strong>Important:</strong> Filing a false dispute may result in account suspension.
+        Please provide accurate information and genuine evidence.
+    </div>
+
+    <!-- Dispute Form -->
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label">Reason for Dispute *</label>
+                    <select name="reason" class="form-select" required>
+                        <option value="">— Select a reason —</option>
+                        {% for value, label in reason_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description *</label>
+                    <textarea name="description" class="form-control" rows="5"
+                              placeholder="Describe the issue in detail. What happened? When? What was the impact?"
+                              required></textarea>
+                    <small class="text-muted">Be as specific as possible. Admin will use this to investigate.</small>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Evidence</label>
+                    <div class="evidence-box">
+                        <div class="mb-3">
+                            <label class="form-label" style="font-size:0.82rem;">
+                                <i class="bi bi-camera-video" style="color:#EF4444;"></i>
+                                Zoom Recording URL
+                            </label>
+                            <input type="url" name="evidence_url" class="form-control"
+                                   placeholder="https://zoom.us/recording/... or any video link">
+                            <small class="text-muted">Paste your Zoom cloud recording link or any other video evidence</small>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size:0.82rem;">
+                                <i class="bi bi-paperclip" style="color:#EF4444;"></i>
+                                Upload File (screenshot, document)
+                            </label>
+                            <input type="file" name="evidence_file" class="form-control"
+                                   accept=".pdf,.jpg,.jpeg,.png,.mp4,.mov,.doc,.docx">
+                            <small class="text-muted">Supported: PDF, JPG, PNG, MP4, MOV, DOC. Max 10MB.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-flag-fill"></i> Submit Dispute
+                    </button>
+                    <a href="{% url 'my_sessions' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

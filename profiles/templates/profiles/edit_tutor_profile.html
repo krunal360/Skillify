@@ -1,0 +1,862 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/edit_tutor_profile.css' %}">
+    <style>
+        .profile-pic-wrapper { position: relative; width: 150px; height: 150px; margin: 0 auto; }
+        .profile-pic-wrapper img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #4ECDC4; transition: all 0.3s; }
+        .profile-pic-wrapper:hover img { opacity: 0.7; }
+        .profile-pic-overlay { position: absolute; top: 0; left: 0; width: 150px; height: 150px; border-radius: 50%; background: rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; cursor: pointer; color: #fff; }
+        .profile-pic-wrapper:hover .profile-pic-overlay { opacity: 1; }
+        .profile-pic-overlay i { font-size: 1.8rem; margin-bottom: 4px; }
+        .profile-pic-overlay span { font-size: 0.75rem; font-weight: 600; }
+        .remove-pic-btn { position: absolute; top: 5px; right: 5px; background: #dc3545; color: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; z-index: 2; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .demo-video-section { background: #f8f9fa; border-radius: 12px; padding: 20px; border: 2px dashed #dee2e6; }
+        .demo-video-section.has-video { border-color: #4ECDC4; background: #f0faf9; }
+        .video-preview { border-radius: 8px; overflow: hidden; margin-top: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .video-preview iframe { width: 100%; height: 280px; border: none; }
+        .file-info { font-size: 0.8rem; color: #6c757d; margin-top: 8px; }
+        .file-info i { color: #4ECDC4; }
+
+        /* Certificates */
+        .cert-upload-area { background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 12px; padding: 16px 20px; transition: all 0.2s; }
+        .cert-upload-area:hover { border-color: #4ECDC4; }
+        .cert-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid #e9ecef; border-radius: 10px; background: #fff; margin-bottom: 8px; transition: all 0.2s; }
+        .cert-item:hover { border-color: #4ECDC4; }
+        .cert-item-icon { font-size: 1.4rem; flex-shrink: 0; }
+        .cert-item-info { flex: 1; min-width: 0; }
+        .cert-item-info strong { display: block; font-size: 0.88rem; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cert-item-info small { color: #6c757d; font-size: 0.78rem; }
+        .cert-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .empty-certs { text-align: center; padding: 1.5rem; color: #adb5bd; }
+        .empty-certs i { font-size: 2rem; display: block; margin-bottom: 6px; }
+
+        /* Learner role banner */
+        .learner-mode-banner {
+            background: linear-gradient(135deg, rgba(78,205,196,0.12), rgba(102,126,234,0.1));
+            border: 1.5px solid #4ECDC4; border-radius: 12px; padding: 14px 18px;
+            margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+        }
+        .learner-mode-banner i { font-size: 1.4rem; color: #4ECDC4; flex-shrink: 0; }
+        .learner-mode-banner p { margin: 0; font-size: 0.88rem; color: #555; }
+        .learner-mode-banner strong { color: #333; }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="bi bi-moon-stars-fill"></i></button>
+
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}"><i class="bi bi-lightbulb-fill"></i><span>Skillify</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+                    {% if user.profile.role == 'tutor' %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'tutor_profile' user.pk %}">View Public Profile</a></li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <span class="current-role-badge"><i class="bi bi-person-video3"></i> {{ request.user.profile.get_role_display }} Mode</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="fw-bold mb-1">
+                    <i class="bi bi-pencil-square"></i> Edit Profile
+                </h2>
+                <p class="text-muted mb-0">
+                    {% if profile.role == 'tutor' %}
+                    Update your profile picture, info, skills, demo video and certificates
+                    {% else %}
+                    Update your profile picture, name and bio
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- Learner mode info banner -->
+        {% if profile.role == 'learner' %}
+        <div class="learner-mode-banner">
+            <i class="bi bi-info-circle-fill"></i>
+            <p>
+                <strong>You're in Learner Mode.</strong>
+                You can update your photo, name and bio here.
+                To manage sessions, certificates and teaching profile —
+                <a href="{% url 'switch_role' %}">switch to Tutor mode</a>.
+            </p>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'edit_tutor_profile' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="remove_picture" id="removePictureFlag" value="0">
+
+            <div class="row">
+                <div class="col-lg-8">
+
+                    <!-- ===== PROFILE PICTURE ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-camera"></i> Profile Picture</h5>
+                            <div class="text-center">
+                                <div class="profile-pic-wrapper">
+                                    <img src="{{ profile.avatar_url }}" alt="Profile" id="profilePreview">
+                                    <label for="profilePictureInput" class="profile-pic-overlay">
+                                        <i class="bi bi-camera-fill"></i>
+                                        <span>Change Photo</span>
+                                    </label>
+                                    {% if profile.profile_picture %}
+                                    <button type="button" class="remove-pic-btn" id="removePicBtn" title="Remove photo">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <input type="file" id="profilePictureInput" name="profile_picture" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+                                <div class="file-info mt-2"><i class="bi bi-info-circle"></i> JPG, PNG, GIF or WebP. Max 5MB.</div>
+                                {% if profile.profile_picture %}
+                                <div class="mt-2"><span class="badge bg-success"><i class="bi bi-check-circle"></i> Custom photo uploaded</span></div>
+                                {% else %}
+                                <div class="mt-2"><span class="badge bg-secondary"><i class="bi bi-person-circle"></i> Using auto-generated avatar</span></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== BASIC INFO ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-person-circle"></i> Basic Information</h5>
+
+                            <div class="mb-3">
+                                <label for="fullName" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="fullName" name="fullName"
+                                       value="{{ user.get_full_name }}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="bio" class="form-label">
+                                    {% if profile.role == 'tutor' %}About Me *{% else %}Bio{% endif %}
+                                </label>
+                                {% if profile.role == 'tutor' %}
+                                <textarea class="form-control" id="bio" name="bio" rows="5"
+                                        maxlength="1000"
+                                        placeholder="Tell learners about your experience and teaching style...">{{ profile.bio }}</textarea>
+                                {% else %}
+                                <textarea class="form-control" id="learner_bio" name="learner_bio" rows="5"
+                                        maxlength="1000"
+                                        placeholder="Tell tutors a bit about yourself and what you want to learn...">{{ profile.learner_bio }}</textarea>
+                                {% endif %}
+                                <small class="form-text">
+                                    {% if profile.role == 'learner' %}This helps tutors understand your learning goals.
+                                    {% else %}Tell learners about your experience and teaching style.{% endif %}
+                                </small>
+                            </div>
+
+                            {% if profile.role == 'tutor' %}
+                            <div class="mb-3">
+                                <label for="headline" class="form-label">Professional Headline *</label>
+                                <input type="text" class="form-control" id="headline" name="headline"
+                                       value="{{ profile.expertise }}"
+                                       placeholder="e.g., React Developer | 5+ years experience">
+                                <small class="form-text">This appears below your name on your public profile</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- ===== SKILLS (role-based label) ===== -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4">
+                                <i class="bi bi-lightbulb"></i>
+                                {% if profile.role == 'tutor' %}Skills I Teach{% else %}Skills I Want to Learn{% endif %}
+                            </h5>
+                            <div class="row">
+                                {% for skill in skills %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="skills"
+                                               value="{{ skill.pk }}" id="skill_{{ skill.pk }}"
+                                               {% if profile.role == 'tutor' %}
+                                                    {% if skill in profile.skills.all %}checked{% endif %}
+                                                {% else %}
+                                                    {% if skill in profile.learning_interests.all %}checked{% endif %}
+                                                {% endif %}>
+                                        <label class="form-check-label" for="skill_{{ skill.pk }}">{{ skill.name }}</label>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12">
+                                    <div class="alert alert-warning mb-0">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        No skills available yet.
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== TUTOR ONLY: DEMO VIDEO ===== -->
+                    {% if profile.role == 'tutor' %}
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4">
+                                <i class="bi bi-play-circle"></i> Demo Video
+                            </h5>
+                            <p class="text-muted small mb-3">
+                                Add a video link to showcase your teaching style.
+                                <button type="button" class="btn btn-link btn-sm p-0 ms-1 text-primary"
+                                        data-bs-toggle="modal" data-bs-target="#videoHelpModal">
+                                    <i class="bi bi-question-circle"></i> How to record a demo video?
+                                </button>
+                            </p>
+
+                            <div class="demo-video-section {% if profile.demo_video %}has-video{% endif %}">
+                                <div class="mb-3">
+                                    <label for="demo_video" class="form-label fw-bold">
+                                        <i class="bi bi-camera-video text-primary"></i> Video URL
+                                    </label>
+                                    <input type="url" class="form-control" id="demo_video" name="demo_video"
+                                        value="{{ profile.demo_video }}"
+                                        placeholder="YouTube, Vimeo, Loom or Google Drive video link">
+                                    <div class="file-info mt-1">
+                                        <i class="bi bi-info-circle"></i>
+                                        Supported:
+                                        <span class="badge bg-danger" style="font-size:0.7rem;">YouTube</span>
+                                        <span class="badge bg-primary" style="font-size:0.7rem;">Vimeo</span>
+                                        <span class="badge bg-success" style="font-size:0.7rem;">Loom</span>
+                                        <span class="badge bg-warning text-dark" style="font-size:0.7rem;">Google Drive</span>
+                                    </div>
+                                    <div class="file-info mt-1" style="color:#f59e0b;">
+                                        <i class="bi bi-shield-exclamation"></i>
+                                        Please ensure your video is publicly accessible or set to "Anyone with link"
+                                    </div>
+                                </div>
+
+                                <div id="videoPreviewContainer" {% if not profile.get_embed_video_url %}style="display:none;"{% endif %}>
+                                    <label class="form-label fw-bold text-success">
+                                        <i class="bi bi-eye"></i> Preview
+                                    </label>
+                                    <div class="video-preview">
+                                        <iframe id="videoPreviewFrame"
+                                                src="{{ profile.get_embed_video_url }}"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowfullscreen></iframe>
+                                    </div>
+                                </div>
+
+                                {% if profile.demo_video %}
+                                <div class="mt-3">
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Video linked
+                                    </span>
+                                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="clearVideoBtn">
+                                        <i class="bi bi-trash"></i> Remove Video
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- ===== VIDEO HELP MODAL ===== -->
+                    <div class="modal fade" id="videoHelpModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                            <div class="modal-content" style="border-radius:16px;border:none;">
+
+                                <!-- Modal Header -->
+                                <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16px 16px 0 0;">
+                                    <h5 class="modal-title text-white fw-bold">
+                                        <i class="bi bi-camera-video-fill me-2"></i> How to Record a Demo Video?
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <!-- Modal Body -->
+                                <div class="modal-body p-4">
+
+                                    <!-- Platform tabs -->
+                                    <ul class="nav nav-pills mb-4 gap-2" id="platformTabs">
+                                        <li class="nav-item">
+                                            <button class="nav-link active" onclick="showPlatform('loom', this)"
+                                                    style="background:linear-gradient(135deg,#625afa,#4835d4);color:#fff;">
+                                                <i class="bi bi-record-circle"></i> Loom
+                                                <span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">Recommended</span>
+                                            </button>
+                                        </li>
+                                        <li class="nav-item">
+                                            <button class="nav-link" onclick="showPlatform('youtube', this)"
+                                                    style="border:2px solid #dee2e6;color:#6c757d;">
+                                                <i class="bi bi-youtube text-danger"></i> YouTube
+                                            </button>
+                                        </li>
+                                        <li class="nav-item">
+                                            <button class="nav-link" onclick="showPlatform('vimeo', this)"
+                                                    style="border:2px solid #dee2e6;color:#6c757d;">
+                                                <i class="bi bi-camera-video text-primary"></i> Vimeo
+                                            </button>
+                                        </li>
+                                        <li class="nav-item">
+                                            <button class="nav-link" onclick="showPlatform('gdrive', this)"
+                                                    style="border:2px solid #dee2e6;color:#6c757d;">
+                                                <i class="bi bi-google text-warning"></i> Google Drive
+                                            </button>
+                                        </li>
+                                    </ul>
+
+                                    <!-- LOOM -->
+                                    <div id="platform-loom">
+                                        <div class="alert alert-success mb-3" style="border-radius:12px;">
+                                            <strong><i class="bi bi-star-fill"></i> Best for teaching demos!</strong>
+                                            Record your screen + face in one click. Free, no editing needed.
+                                        </div>
+                                        <div class="d-flex flex-column gap-3">
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill text-white fw-bold" style="background:#625afa;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">1</span>
+                                                <div>
+                                                    <strong>Go to loom.com</strong>
+                                                    <p class="mb-0 text-muted small">Click "Sign Up Free" — use your Google account for fastest signup</p>
+                                                    <a href="https://loom.com" target="_blank" class="btn btn-sm mt-2" style="background:#625afa;color:#fff;border-radius:8px;">
+                                                        Open Loom <i class="bi bi-box-arrow-up-right"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill text-white fw-bold" style="background:#625afa;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">2</span>
+                                                <div>
+                                                    <strong>Install Loom Chrome Extension</strong>
+                                                    <p class="mb-0 text-muted small">Or download the desktop app. Chrome extension is easiest!</p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill text-white fw-bold" style="background:#625afa;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">3</span>
+                                                <div>
+                                                    <strong>Click Loom icon → Start Recording</strong>
+                                                    <p class="mb-0 text-muted small">Choose <strong>Screen + Camera</strong> for best results. Record 2-5 minutes showing your teaching style.</p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill text-white fw-bold" style="background:#625afa;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">4</span>
+                                                <div>
+                                                    <strong>Copy the link and paste here</strong>
+                                                    <p class="mb-0 text-muted small">After recording stops, Loom gives you a link automatically.</p>
+                                                    <code style="font-size:0.8rem;">loom.com/share/abc123...</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info mt-3" style="border-radius:12px;font-size:0.85rem;">
+                                            <i class="bi bi-info-circle"></i>
+                                            <strong>Free plan:</strong> Unlimited videos, up to 5 minutes each. Perfect for demo videos!
+                                        </div>
+                                    </div>
+
+                                    <!-- YOUTUBE -->
+                                    <div id="platform-youtube" style="display:none;">
+                                        <div class="alert alert-danger mb-3" style="border-radius:12px;">
+                                            <strong><i class="bi bi-youtube"></i> Use Unlisted setting!</strong>
+                                            Set video to "Unlisted" so it won't appear in YouTube search.
+                                        </div>
+                                        <div class="d-flex flex-column gap-3">
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-danger text-white fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">1</span>
+                                                <div>
+                                                    <strong>Record your video</strong>
+                                                    <p class="mb-0 text-muted small">Use your phone, laptop webcam, or OBS (free screen recorder)</p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-danger text-white fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">2</span>
+                                                <div>
+                                                    <strong>Go to YouTube Studio</strong>
+                                                    <p class="mb-0 text-muted small">studio.youtube.com → Click "Upload Video"</p>
+                                                    <a href="https://studio.youtube.com" target="_blank" class="btn btn-sm btn-danger mt-2" style="border-radius:8px;">
+                                                        Open YouTube Studio <i class="bi bi-box-arrow-up-right"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-danger text-white fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">3</span>
+                                                <div>
+                                                    <strong>Set Visibility to "Unlisted"</strong>
+                                                    <p class="mb-0 text-muted small">In upload settings → Visibility → Select <strong>Unlisted</strong> (not Public or Private)</p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-danger text-white fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">4</span>
+                                                <div>
+                                                    <strong>Copy video link and paste here</strong>
+                                                    <p class="mb-0 text-muted small">After upload → Share → Copy Link</p>
+                                                    <code style="font-size:0.8rem;">youtube.com/watch?v=abc123...</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- VIMEO -->
+                                    <div id="platform-vimeo" style="display:none;">
+                                        <div class="alert alert-primary mb-3" style="border-radius:12px;">
+                                            <strong><i class="bi bi-camera-video"></i> Set to "Only people with link"!</strong>
+                                            This keeps your video private but embeddable on Skillify.
+                                        </div>
+                                        <div class="d-flex flex-column gap-3">
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-primary text-white fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">1</span>
+                                                <div>
+                                                    <strong>Record your video first</strong>
+                                                    <p class="mb-0 text-muted small">Use phone camera, laptop webcam, or any recording app</p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-primary text-white fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">2</span>
+                                                <div>
+                                                    <strong>Go to Vimeo and Sign Up Free</strong>
+                                                    <a href="https://vimeo.com" target="_blank" class="btn btn-sm btn-primary mt-2" style="border-radius:8px;">
+                                                        Open Vimeo <i class="bi bi-box-arrow-up-right"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-primary text-white fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">3</span>
+                                                <div>
+                                                    <strong>Upload video → Set Privacy</strong>
+                                                    <p class="mb-0 text-muted small">Privacy settings → Select <strong>"Only people with the private link"</strong></p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-primary text-white fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">4</span>
+                                                <div>
+                                                    <strong>Copy link and paste here</strong>
+                                                    <code style="font-size:0.8rem;">vimeo.com/123456789</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-warning mt-3" style="border-radius:12px;font-size:0.85rem;">
+                                            <i class="bi bi-info-circle"></i>
+                                            <strong>Free plan:</strong> 5GB total storage. More than enough for 1-2 demo videos!
+                                        </div>
+                                    </div>
+
+                                    <!-- GOOGLE DRIVE -->
+                                    <div id="platform-gdrive" style="display:none;">
+                                        <div class="alert alert-warning mb-3" style="border-radius:12px;">
+                                            <strong><i class="bi bi-google"></i> Set sharing to "Anyone with link"!</strong>
+                                            Otherwise the video won't show on your profile.
+                                        </div>
+                                        <div class="d-flex flex-column gap-3">
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-warning text-dark fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">1</span>
+                                                <div>
+                                                    <strong>Record your video</strong>
+                                                    <p class="mb-0 text-muted small">Use phone, laptop, or any recording tool</p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-warning text-dark fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">2</span>
+                                                <div>
+                                                    <strong>Upload to Google Drive</strong>
+                                                    <p class="mb-0 text-muted small">Go to drive.google.com → Click "New" → "File Upload"</p>
+                                                    <a href="https://drive.google.com" target="_blank" class="btn btn-sm btn-warning mt-2" style="border-radius:8px;">
+                                                        Open Google Drive <i class="bi bi-box-arrow-up-right"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-warning text-dark fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">3</span>
+                                                <div>
+                                                    <strong>Right click video → Share → Change access</strong>
+                                                    <p class="mb-0 text-muted small">Select <strong>"Anyone with the link"</strong> → Role: <strong>Viewer</strong></p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:#f8f9fa;">
+                                                <span class="badge rounded-pill bg-warning text-dark fw-bold" style="min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;">4</span>
+                                                <div>
+                                                    <strong>Copy link and paste here</strong>
+                                                    <code style="font-size:0.8rem;">drive.google.com/file/d/abc123.../view</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <!-- Modal Footer -->
+                                <div class="modal-footer" style="border-top:1px solid #f0f0f0;">
+                                    <p class="text-muted small mb-0 me-auto">
+                                        <i class="bi bi-shield-check text-success"></i>
+                                        Videos are hosted on external platforms. Skillify only stores the link.
+                                    </p>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                    function showPlatform(platform, btn) {
+                        // Hide all platforms
+                        ['loom', 'youtube', 'vimeo', 'gdrive'].forEach(p => {
+                            document.getElementById('platform-' + p).style.display = 'none';
+                        });
+
+                        // Reset all buttons
+                        document.querySelectorAll('#platformTabs .nav-link').forEach(b => {
+                            b.classList.remove('active');
+                            b.style.background = '';
+                            b.style.color = '#6c757d';
+                            b.style.border = '2px solid #dee2e6';
+                        });
+
+                        // Show selected platform
+                        document.getElementById('platform-' + platform).style.display = 'block';
+
+                        // Activate button
+                        btn.classList.add('active');
+                        const colors = {
+                            loom: '#625afa',
+                            youtube: '#dc3545',
+                            vimeo: '#0d6efd',
+                            gdrive: '#ffc107'
+                        };
+                        btn.style.background = colors[platform];
+                        btn.style.color = platform === 'gdrive' ? '#000' : '#fff';
+                        btn.style.border = 'none';
+                    }
+                    </script>
+
+                    <!-- ===== TUTOR ONLY: CERTIFICATES ===== -->
+                    {% if profile.role == 'tutor' %}
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-patch-check"></i> Certificates</h5>
+                            <p class="text-muted small mb-3">Upload your certificates to build trust with learners. Supported: PDF, JPG, PNG.</p>
+                            <div class="cert-upload-area mb-4">
+                                <div class="mb-3">
+                                    <label for="cert_title" class="form-label fw-bold"><i class="bi bi-tag"></i> Certificate Title</label>
+                                    <input type="text" class="form-control" id="cert_title" name="cert_title"
+                                           placeholder="e.g., AWS Certified Developer">
+                                </div>
+                                <div class="mb-2">
+                                    <label for="cert_file" class="form-label fw-bold"><i class="bi bi-file-earmark-arrow-up"></i> Certificate File</label>
+                                    <input type="file" class="form-control" id="cert_file" name="cert_file"
+                                           accept=".pdf,.jpg,.jpeg,.png">
+                                    <div class="file-info mt-1"><i class="bi bi-info-circle"></i> PDF, JPG or PNG. Max 5MB.</div>
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary btn-sm mt-1">
+                                    <i class="bi bi-upload"></i> Upload Certificate
+                                </button>
+                            </div>
+                            <h6 class="fw-bold mb-2" style="color:#333;">Your Certificates</h6>
+                            {% if certificates %}
+                            <div>
+                                {% for cert in certificates %}
+                                <div class="cert-item">
+                                    <div class="cert-item-icon">
+                                        {% if cert.is_pdf %}<i class="bi bi-file-pdf-fill text-danger"></i>
+                                        {% else %}<i class="bi bi-image-fill text-primary"></i>{% endif %}
+                                    </div>
+                                    <div class="cert-item-info">
+                                        <strong>{{ cert.title }}</strong>
+                                        <small>Uploaded {{ cert.uploaded_at|date:"M d, Y" }}</small>
+                                    </div>
+                                    <div class="cert-item-actions">
+                                        <a href="{{ cert.file.url }}" target="_blank" class="btn btn-outline-secondary btn-sm" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button type="submit" name="delete_cert_id" value="{{ cert.pk }}"
+                                                class="btn btn-outline-danger btn-sm" title="Delete"
+                                                onclick="return confirm('Delete this certificate?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="empty-certs">
+                                <i class="bi bi-patch-check"></i>
+                                <span class="small">No certificates uploaded yet</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- ===== TUTOR ONLY: PORTFOLIO LINKS ===== -->
+                    {% if profile.role == 'tutor' %}
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="section-title mb-4"><i class="bi bi-link-45deg"></i> Portfolio Links</h5>
+                            <div class="mb-3">
+                                <label for="linkedin" class="form-label"><i class="bi bi-linkedin text-primary"></i> LinkedIn URL</label>
+                                <input type="url" class="form-control" id="linkedin" name="linkedin"
+                                       value="{{ profile.linkedin }}" placeholder="https://linkedin.com/in/yourname">
+                            </div>
+                            <div class="mb-3">
+                                <label for="github" class="form-label"><i class="bi bi-github"></i> GitHub URL</label>
+                                <input type="url" class="form-control" id="github" name="github"
+                                       value="{{ profile.github }}" placeholder="https://github.com/yourname">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- ===== SAVE BUTTON ===== -->
+                    <div class="d-flex gap-2 mb-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Save Changes
+                        </button>
+                        <!-- <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                        {% if profile.role == 'tutor' %}
+                        <a href="{% url 'tutor_profile' user.pk %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-eye"></i> View Public Profile
+                        </a>
+                        {% endif %} -->
+                    </div>
+                </div>
+
+                <!-- ===== RIGHT SIDEBAR ===== -->
+                <div class="col-lg-4">
+
+                    <!-- Profile Preview Card -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4 text-center">
+                            <img src="{{ profile.avatar_url }}" alt="Profile"
+                                 style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #4ECDC4;"
+                                 class="mb-3">
+                            <h6 class="fw-bold">{{ user.get_full_name }}</h6>
+                            <p class="text-muted small mb-2">
+                                {% if profile.role == 'tutor' %}{{ profile.expertise|default:"No headline set" }}
+                                {% else %}Learner{% endif %}
+                            </p>
+                            <span class="badge bg-primary">{{ profile.get_role_display }}</span>
+                            {% if profile.trust_score and profile.role == 'tutor' %}
+                            <span class="badge bg-success ms-1"><i class="bi bi-shield-check"></i> {{ profile.trust_score|floatformat:0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Tips — role specific -->
+                    <div class="card tips-card">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-lightbulb-fill text-warning"></i> Profile Tips</h6>
+                            <ul class="tips-list list-unstyled">
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Upload a clear, professional photo</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Write a helpful bio</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Select your
+                                    {% if profile.role == 'tutor' %}teaching{% else %}learning{% endif %} interests</li>
+                                {% if profile.role == 'tutor' %}
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Add a demo video</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Upload certificates</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Link your GitHub/LinkedIn</li>
+                                {% else %}
+                                <li class="mb-2"><i class="bi bi-check-circle text-success"></i>
+                                    <a href="{% url 'switch_role' %}" class="text-decoration-none">Switch to Tutor</a> to teach & earn credits
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Tutor only: mini calendar -->
+                    {% if profile.role == 'tutor' and calendar_data %}
+                    <div class="card mt-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-calendar3" style="color:#667eea;"></i> My Sessions Calendar</h6>
+                            <div style="display:flex;gap:4px;border-bottom:1px solid #e9ecef;margin-bottom:10px;">
+                                {% for week in calendar_data %}
+                                {% if forloop.first %}
+                                <button type="button"
+                                        style="padding:4px 12px;font-size:0.78rem;font-weight:600;color:#667eea;border:none;background:transparent;border-bottom:2px solid #667eea;cursor:pointer;margin-bottom:-1px;"
+                                        onclick="switchMiniWeek('{{ week.week_num }}', this)">
+                                    {{ week.label }}
+                                </button>
+                                {% else %}
+                                <button type="button"
+                                        style="padding:4px 12px;font-size:0.78rem;font-weight:600;color:#6c757d;border:none;background:transparent;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px;"
+                                        onclick="switchMiniWeek('{{ week.week_num }}', this)">
+                                    {{ week.label }}
+                                </button>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% for week in calendar_data %}
+                            {% if forloop.first %}
+                            <div id="miniCalWeek{{ week.week_num }}">
+                            {% else %}
+                            <div id="miniCalWeek{{ week.week_num }}" style="display:none;">
+                            {% endif %}
+                                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">
+                                    {% for day in week.days %}
+                                    {% if day.is_today %}
+                                    <div style="border:1px solid #667eea;border-radius:6px;overflow:hidden;">
+                                    {% else %}
+                                    <div style="border:1px solid #e9ecef;border-radius:6px;overflow:hidden;">
+                                    {% endif %}
+                                        <div style="display:flex;flex-direction:column;align-items:center;padding:3px 1px;background:#f8f9fa;gap:1px;">
+                                            <div style="font-size:0.52rem;font-weight:700;color:#adb5bd;text-transform:uppercase;">{{ day.day_name|slice:":1" }}</div>
+                                            {% if day.is_today %}
+                                            <div style="width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;">{{ day.day_num }}</div>
+                                            {% else %}
+                                            <div style="width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:700;color:#333;">{{ day.day_num }}</div>
+                                            {% endif %}
+                                        </div>
+                                        {% for slot in day.sessions %}
+                                        <div style="margin:1px;border-radius:3px;padding:2px 1px;font-size:0.48rem;font-weight:700;text-align:center;background:rgba(16,185,129,0.2);color:#065F46;"
+                                             title="{{ slot.start_time }} {{ slot.title }}">
+                                            {{ slot.start_time|slice:":5" }}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Profile picture preview
+        const fileInput  = document.getElementById('profilePictureInput');
+        const preview    = document.getElementById('profilePreview');
+        const removeFlag = document.getElementById('removePictureFlag');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); this.value = ''; return; }
+                if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) { alert('JPG, PNG, GIF or WebP only.'); this.value = ''; return; }
+                const reader = new FileReader();
+                reader.onload = function(ev) { preview.src = ev.target.result; };
+                reader.readAsDataURL(file);
+                removeFlag.value = '0';
+                let btn = document.getElementById('removePicBtn');
+                if (!btn) {
+                    btn = document.createElement('button');
+                    btn.type = 'button'; btn.className = 'remove-pic-btn'; btn.id = 'removePicBtn';
+                    btn.title = 'Remove photo'; btn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    preview.parentElement.appendChild(btn);
+                    attachRemove(btn);
+                }
+            });
+        }
+
+        function attachRemove(btn) {
+            btn.addEventListener('click', function() {
+                removeFlag.value = '1';
+                fileInput.value = '';
+                preview.src = "https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode }}&background=4ECDC4&color=fff&size=150";
+                this.remove();
+            });
+        }
+        const removeBtn = document.getElementById('removePicBtn');
+        if (removeBtn) attachRemove(removeBtn);
+
+        // Demo video preview (tutor only)
+        const videoInput      = document.getElementById('demo_video');
+        const previewContainer = document.getElementById('videoPreviewContainer');
+        const previewFrame    = document.getElementById('videoPreviewFrame');
+        const clearVideoBtn   = document.getElementById('clearVideoBtn');
+
+        function getEmbedUrl(url) {
+            if (!url) return '';
+            let m = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+            if (m) return 'https://www.youtube.com/embed/' + m[1];
+            m = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+            if (m) return 'https://www.youtube.com/embed/' + m[1];
+            if (url.includes('youtube.com/embed/')) return url;
+            m = url.match(/vimeo\.com\/(\d+)/);
+            if (m) return 'https://player.vimeo.com/video/' + m[1];
+            return '';
+        }
+
+        if (videoInput) {
+            let timer;
+            videoInput.addEventListener('input', function() {
+                clearTimeout(timer);
+                timer = setTimeout(function() {
+                    const embed = getEmbedUrl(videoInput.value.trim());
+                    if (embed) { previewFrame.src = embed; previewContainer.style.display = 'block'; }
+                    else { previewFrame.src = ''; previewContainer.style.display = 'none'; }
+                }, 600);
+            });
+        }
+        if (clearVideoBtn) {
+            clearVideoBtn.addEventListener('click', function() {
+                videoInput.value = ''; previewFrame.src = '';
+                previewContainer.style.display = 'none';
+                this.parentElement.style.display = 'none';
+            });
+        }
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
+            }
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-theme');
+                const dark = document.body.classList.contains('dark-theme');
+                localStorage.setItem('theme', dark ? 'dark' : 'light');
+                this.innerHTML = dark ? '<i class="bi bi-sun-fill"></i>' : '<i class="bi bi-moon-stars-fill"></i>';
+            });
+        }
+
+        // Auto-dismiss alerts
+        document.querySelectorAll('.alert-dismissible').forEach(function(a) {
+            setTimeout(function() { bootstrap.Alert.getOrCreateInstance(a)?.close(); }, 5000);
+        });
+    });
+
+    // Mini calendar week switcher (tutor only)
+    function switchMiniWeek(weekNum, btn) {
+        document.querySelectorAll('[id^="miniCalWeek"]').forEach(function(p) { p.style.display = 'none'; });
+        document.querySelectorAll('[onclick^="switchMiniWeek"]').forEach(function(b) {
+            b.style.borderBottomColor = 'transparent';
+            b.style.color = '#6c757d';
+        });
+        const panel = document.getElementById('miniCalWeek' + weekNum);
+        if (panel) panel.style.display = 'block';
+        btn.style.borderBottomColor = '#667eea';
+        btn.style.color = '#667eea';
+    }
+    </script>
+</body>
+</html>

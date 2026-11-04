@@ -1,0 +1,302 @@
+{% extends 'skillify_admin/base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_style %}
+<style>
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.stat-card.highlighted {
+    border: 2px solid #4ECDC4;
+}
+
+.stat-left .stat-number {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stat-left .stat-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #adb5bd;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-icon-box {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+/* Activity Feed */
+.activity-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.activity-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f4f8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #2D3748;
+}
+
+.activity-header i { color: #4ECDC4; }
+
+.activity-list {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 20px;
+    border-bottom: 1px solid #f8fafc;
+    transition: background 0.1s;
+}
+
+.activity-item:last-child { border-bottom: none; }
+.activity-item:hover { background: #f8fafc; }
+
+.activity-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.activity-text {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #2D3748;
+    font-weight: 500;
+}
+
+.activity-time {
+    font-size: 0.75rem;
+    color: #adb5bd;
+    white-space: nowrap;
+}
+</style>    
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-grid-fill"></i> Dashboard</h1>
+    <p>Platform overview and recent activity</p>
+</div>
+
+<!-- Stat Cards Row 1 -->
+<div class="stat-grid">
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#4ECDC4;">{{ total_users }}</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);">
+            <i class="bi bi-people-fill"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#4ECDC4;">{{ total_tutors }}</div>
+            <div class="stat-label">Tutors</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);">
+            <i class="bi bi-person-video3"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#F59E0B;">{{ total_learners }}</div>
+            <div class="stat-label">Learners</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#F59E0B,#D97706);">
+            <i class="bi bi-person-fill"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#8B5CF6;">{{ total_skills }}</div>
+            <div class="stat-label">Skills</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED);">
+            <i class="bi bi-lightbulb-fill"></i>
+        </div>
+    </div>
+
+</div>
+
+<!-- Stat Cards Row 2 -->
+<div class="stat-grid">
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#4ECDC4;">{{ total_sessions }}</div>
+            <div class="stat-label">Sessions</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);">
+            <i class="bi bi-camera-video-fill"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#EC4899;">{{ total_bookings }}</div>
+            <div class="stat-label">Bookings</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#EC4899,#DB2777);">
+            <i class="bi bi-bookmark-fill"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#F59E0B;">{{ total_reviews }}</div>
+            <div class="stat-label">Reviews</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#F59E0B,#D97706);">
+            <i class="bi bi-star-fill"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#EF4444;">{{ open_disputes }}</div>
+            <div class="stat-label">Open Disputes</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#EF4444,#DC2626);">
+            <i class="bi bi-flag-fill"></i>
+        </div>
+    </div>
+
+</div>
+
+<!-- Stat Cards Row 3 -->
+<div class="stat-grid">
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#10B981;">{{ credits_in_system }}</div>
+            <div class="stat-label">Credits in System</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#10B981,#059669);">
+            <i class="bi bi-wallet-fill"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#3B82F6;">{{ total_messages }}</div>
+            <div class="stat-label">Messages</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#3B82F6,#2563EB);">
+            <i class="bi bi-chat-dots-fill"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#4ECDC4;">{{ new_this_week }}</div>
+            <div class="stat-label">New This Week</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);">
+            <i class="bi bi-person-plus-fill"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#4ECDC4;">{{ new_this_month }}</div>
+            <div class="stat-label">New This Month</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);">
+            <i class="bi bi-calendar-fill"></i>
+        </div>
+    </div>
+
+</div>
+
+<!-- Active Sessions Today — single card -->
+<div style="margin-bottom:24px;">
+    <div class="stat-card" style="max-width:260px;">
+        <div class="stat-left">
+            <div class="stat-number" style="color:#8B5CF6;">{{ active_today }}</div>
+            <div class="stat-label">Active Sessions Today</div>
+        </div>
+        <div class="stat-icon-box" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED);">
+            <i class="bi bi-broadcast"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Feed -->
+<div class="activity-card">
+    <div class="activity-header">
+        <i class="bi bi-activity"></i> Recent Activity
+    </div>
+    <div class="activity-list">
+        {% for activity in recent_activities %}
+        <div class="activity-item">
+            <div class="activity-icon" style="background:'{{ activity.color }}';">
+                <i class="bi {{ activity.icon }}"></i>
+            </div>
+            <div class="activity-text">{{ activity.text }}</div>
+            <div class="activity-time">{{ activity.time|date:"M d, g:i A" }}</div>
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:40px;color:#adb5bd;">
+            <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:10px;"></i>
+            No recent activity yet
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

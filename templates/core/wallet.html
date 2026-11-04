@@ -1,0 +1,455 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet & Credits - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/wallet.css' %}">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        .navbar-collapse { z-index: 9999 !important; }
+.dropdown-menu { z-index: 9999 !important; }
+.navbar .nav-item { position: relative; }
+
+        /* Stats Cards */
+        .stat-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 22px 24px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+            border: none;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; color: #fff;
+            margin-bottom: 14px;
+        }
+        .stat-label { font-size: 0.82rem; color: #6c757d; font-weight: 600; margin-bottom: 4px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: #2D3748; line-height: 1; }
+        .stat-sub { font-size: 0.75rem; color: #adb5bd; margin-top: 4px; }
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 28px;
+            color: #fff;
+            box-shadow: 0 8px 30px rgba(102,126,234,0.35);
+        }
+        .balance-label { font-size: 0.85rem; opacity: 0.85; font-weight: 500; }
+        .balance-amount { font-size: 3rem; font-weight: 800; line-height: 1.1; }
+        .balance-sub { font-size: 0.82rem; opacity: 0.75; }
+        .frozen-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 0.82rem; font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Transaction section */
+        .txn-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .txn-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .txn-header h5 { font-weight: 700; font-size: 1rem; margin: 0; }
+
+        /* Filter pills */
+        .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+        .filter-pill {
+            padding: 6px 16px; border-radius: 20px;
+            border: 2px solid #e9ecef;
+            background: #fff; color: #6c757d;
+            font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .filter-pill:hover { border-color: #667eea; color: #667eea; }
+        .filter-pill.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: transparent; color: #fff;
+        }
+        .filter-pill.earned.active { background: linear-gradient(135deg, #10B981, #059669); }
+        .filter-pill.spent.active  { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        /* Export button */
+        .btn-export {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 16px; border-radius: 10px;
+            border: 2px solid #e9ecef; background: #fff;
+            color: #667eea; font-size: 0.82rem; font-weight: 700;
+            text-decoration: none; transition: all 0.2s;
+            margin-left: auto;
+        }
+        .btn-export:hover {
+            background: #667eea; color: #fff;
+            border-color: #667eea;
+        }
+
+        /* Transaction table */
+        .txn-table { margin: 0; }
+        .txn-table thead th {
+            background: #f8f9fa;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 20px;
+            border: none;
+        }
+        .txn-table tbody tr { transition: background 0.15s; }
+        .txn-table tbody tr:hover { background: #f8f9fa; }
+        .txn-table tbody td {
+            padding: 14px 20px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 0.88rem;
+            vertical-align: middle;
+        }
+        .txn-date { color: #6c757d; font-size: 0.8rem; }
+        .txn-desc { font-weight: 600; color: #2D3748; }
+        .txn-amount-earn { color: #10B981; font-weight: 700; }
+        .txn-amount-spend { color: #ef4444; font-weight: 700; }
+        .txn-badge {
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700;
+        }
+        .empty-txn { text-align: center; padding: 50px; color: #adb5bd; }
+        .empty-txn i { font-size: 3rem; }
+    </style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <i class="bi bi-moon-stars-fill"></i>
+</button>
+
+<nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="{% url 'index' %}">
+            <i class="bi bi-lightbulb-fill"></i><span>Skillify</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door"></i> Dashboard</a></li>
+                {% if user.is_authenticated and user.profile.role == 'learner' %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'browse_skills' %}">Browse Skills</a></li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'my_sessions' %}"><i class="bi bi-camera-video"></i> My Sessions</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'wallet' %}"><i class="bi bi-wallet2"></i> Wallet</a></li>
+
+<!-- ── Bell Notification Icon ── -->
+<li class="nav-item dropdown">
+    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" id="notifBell">
+        <i class="bi bi-bell-fill" style="font-size:1.1rem;"></i>
+        <span id="notifBadge"
+              style="display:none;position:absolute;top:2px;right:0px;background:#ef4444;color:#fff;border-radius:50%;width:18px;height:18px;font-size:0.62rem;font-weight:700;display:flex;align-items:center;justify-content:center;"></span>
+    </a>
+    <div class="dropdown-menu dropdown-menu-end p-0" style="width:340px;border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.12);">
+        <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="color:#fff;font-weight:700;font-size:0.95rem;"><i class="bi bi-bell-fill"></i> Notifications</span>
+            <a href="{% url 'notifications_mark_all_read' %}" 
+               onclick="event.preventDefault();fetch(this.href,{method:'POST',headers:{'X-CSRFToken':'{{ csrf_token }}'}}).then(()=>location.reload())"
+               style="color:rgba(255,255,255,0.8);font-size:0.75rem;text-decoration:none;">Mark all read</a>
+        </div>
+        <div id="notifList" style="max-height:320px;overflow-y:auto;">
+            <div class="text-center py-4 text-muted" style="font-size:0.85rem;">
+                <i class="bi bi-bell" style="font-size:1.5rem;display:block;margin-bottom:6px;"></i>
+                Loading...
+            </div>
+        </div>
+        <div style="border-top:1px solid #f0f0f0;padding:10px;text-align:center;">
+            <a href="{% url 'notifications_page' %}" style="font-size:0.82rem;font-weight:600;color:#667eea;text-decoration:none;">
+                View All Notifications
+            </a>
+        </div>
+    </div>
+</li>
+<!-- ── End Bell ── -->
+
+<li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <img src="{{ request.user.profile.avatar_url }}" class="user-avatar" alt="User"
+                             style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                        <span class="role-indicator">{{ profile.get_role_display }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'switch_role' %}"><i class="bi bi-arrow-left-right"></i> Switch Role</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'edit_tutor_profile' %}"><i class="bi bi-person-gear"></i> Edit Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4" style="max-width:1100px;">
+
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1"><i class="bi bi-wallet2" style="color:#667eea;"></i> My Wallet</h2>
+        <p class="text-muted mb-0">Manage your credits and transaction history</p>
+    </div>
+
+    <!-- Top Row: Balance + Stats -->
+    <div class="row g-4 mb-4">
+
+        <!-- Balance Card -->
+        <div class="col-lg-4">
+            <div class="balance-card h-100">
+                <div class="balance-label mb-2">
+                    <i class="bi bi-wallet2"></i> Available Balance
+                </div>
+                <div class="balance-amount">{{ wallet.balance }}</div>
+                <div class="balance-sub mb-3">credits</div>
+                {% if wallet.frozen_balance > 0 %}
+                <div class="frozen-badge">
+                    <i class="bi bi-lock-fill"></i>
+                    {{ wallet.frozen_balance }} credits frozen
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="col-lg-8">
+            <div class="row g-3 h-100">
+
+                <div class="col-md-3">
+                    <div class="stat-card h-100">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                        <div class="stat-label">Total Balance</div>
+                        <div class="stat-value">{{ wallet.balance }}</div>
+                        <div class="stat-sub">credits available</div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="stat-card h-100">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#10B981,#059669);">
+                            <i class="bi bi-arrow-down-circle"></i>
+                        </div>
+                        <div class="stat-label">Total Earned</div>
+                        <div class="stat-value" style="color:#10B981;">{{ total_earned }}</div>
+                        <div class="stat-sub">credits received</div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="stat-card h-100">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);">
+                            <i class="bi bi-arrow-up-circle"></i>
+                        </div>
+                        <div class="stat-label">Total Spent</div>
+                        <div class="stat-value" style="color:#ef4444;">{{ total_spent }}</div>
+                        <div class="stat-sub">credits used</div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="stat-card h-100">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="stat-label">Transactions</div>
+                        <div class="stat-value" style="color:#f59e0b;">{{ transactions.count }}</div>
+                        <div class="stat-sub">total records</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="txn-card">
+        <div class="txn-header">
+            <h5><i class="bi bi-clock-history" style="color:#667eea;"></i> Transaction History</h5>
+
+            <!-- Filter Pills -->
+            <div class="filter-pills">
+                <button class="filter-pill active" onclick="filterTxn('all', this)">
+                    <i class="bi bi-list-ul"></i> All ({{ transactions.count }})
+                </button>
+                <button class="filter-pill earned" onclick="filterTxn('earned', this)">
+                    <i class="bi bi-arrow-down-circle"></i> Earned
+                </button>
+                <button class="filter-pill spent" onclick="filterTxn('spent', this)">
+                    <i class="bi bi-arrow-up-circle"></i> Spent
+                </button>
+            </div>
+
+            <!-- Export Button -->
+            <a href="{% url 'wallet_export' %}?filter=all" id="exportBtn" class="btn-export" download>
+                <i class="bi bi-download"></i> Export CSV
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table txn-table" id="txnTable">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Balance After</th>
+                    </tr>
+                </thead>
+                <tbody id="txnBody">
+                    {% for txn in transactions %}
+                    <tr data-type="{% if txn.transaction_type in earned_types or txn.transaction_type == 'credits_unfrozen' %}earned{% elif txn.transaction_type == 'credits_frozen' %}spent{% else %}spent{% endif %}">
+                        <td>
+                            <div class="txn-date">{{ txn.created_at|date:"M d, Y" }}</div>
+                            <div class="txn-date">{{ txn.created_at|time:"g:i A" }}</div>
+                        </td>
+                        <td class="txn-desc">{{ txn.description }}</td>
+                        <td>
+                            {% if txn.transaction_type in earned_types or txn.transaction_type == 'credits_unfrozen' %}
+                            <span class="txn-badge" style="background:rgba(16,185,129,0.12);color:#065F46;">
+                                <i class="bi bi-arrow-down-circle-fill"></i>
+                                {{ txn.get_transaction_type_display }}
+                            </span>
+                            {% else %}
+                            <span class="txn-badge" style="background:rgba(239,68,68,0.1);color:#991B1B;">
+                                <i class="bi bi-arrow-up-circle-fill"></i>
+                                {{ txn.get_transaction_type_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if txn.transaction_type in earned_types or txn.transaction_type == 'credits_unfrozen' %}
+                            <span class="txn-amount-earn">+{{ txn.amount }}</span>
+                            {% else %}
+                            <span class="txn-amount-spend">-{{ txn.amount }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="color:#6c757d;font-weight:600;">{{ txn.balance_after }} credits</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-txn">
+                                <i class="bi bi-inbox d-block mb-2"></i>
+                                <p class="mb-0">No transactions yet</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/wallet.js' %}"></script>
+<script>
+    let currentFilter = 'all';
+
+    function filterTxn(type, btn) {
+        currentFilter = type;
+
+        // Update pills
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Filter rows
+        document.querySelectorAll('#txnBody tr[data-type]').forEach(row => {
+            if (type === 'all') {
+                row.style.display = '';
+            } else {
+                row.style.display = row.dataset.type === type ? '' : 'none';
+            }
+        });
+
+        // Update export button
+        document.getElementById('exportBtn').href = `/wallet/export/?filter=${type}`;
+
+        // Update empty state
+        const visibleRows = document.querySelectorAll(`#txnBody tr[data-type]${type !== 'all' ? `[data-type="${type}"]` : ''}`).length;
+        const emptyRow = document.getElementById('emptyRow');
+        if (emptyRow) emptyRow.style.display = visibleRows === 0 ? '' : 'none';
+    }
+
+ 
+// ── Notification Bell ──────────────────────────────────────────
+function loadNotifications() {
+    fetch('/notifications/recent/')
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById('notifBadge');
+            const list  = document.getElementById('notifList');
+
+            // Update badge
+            if (data.unread_count > 0) {
+                badge.style.display = 'flex';
+                badge.textContent   = data.unread_count > 9 ? '9+' : data.unread_count;
+            } else {
+                badge.style.display = 'none';
+            }
+
+            // Render notifications
+            if (data.notifications.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-4 text-muted" style="font-size:0.85rem;">
+                        <i class="bi bi-bell" style="font-size:1.5rem;display:block;margin-bottom:6px;"></i>
+                        No notifications yet
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = data.notifications.map(n => `
+                <a href="${n.link}" style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;text-decoration:none;border-bottom:1px solid #f5f5f5;background:${n.is_read ? '#fff' : 'rgba(102,126,234,0.05)'};"
+                   onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='${n.is_read ? '#fff' : 'rgba(102,126,234,0.05)'}'">
+                    <div style="width:36px;height:36px;border-radius:50%;background:var(--bs-${n.color},#667eea);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi ${n.icon}" style="color:#fff;font-size:0.85rem;"></i>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:0.82rem;font-weight:${n.is_read ? '500' : '700'};color:#2D3748;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.title}</div>
+                        <div style="font-size:0.75rem;color:#6c757d;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.message}</div>
+                        <div style="font-size:0.7rem;color:#adb5bd;margin-top:3px;">${n.time}</div>
+                    </div>
+                    ${!n.is_read ? '<div style="width:8px;height:8px;border-radius:50%;background:#667eea;flex-shrink:0;margin-top:4px;"></div>' : ''}
+                </a>
+            `).join('');
+        })
+        .catch(() => {});
+}
+
+// Load on bell click
+document.getElementById('notifBell').addEventListener('click', loadNotifications);
+
+// Poll every 30 seconds
+loadNotifications();
+setInterval(loadNotifications, 30000);
+
+</script>
+</body>
+</html>

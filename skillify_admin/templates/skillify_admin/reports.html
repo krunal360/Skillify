@@ -1,0 +1,186 @@
+{% extends 'skillify_admin/base.html' %}
+{% block title %}Reports & Exports{% endblock %}
+
+{% block extra_style %}
+<style>
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+.report-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.report-card:hover {
+    border-color: #4ECDC4;
+    box-shadow: 0 4px 16px rgba(78,205,196,0.1);
+    transform: translateY(-2px);
+}
+.report-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; color: #fff;
+}
+.report-title {
+    font-size: 1rem; font-weight: 700; color: #2D3748;
+}
+.report-desc {
+    font-size: 0.82rem; color: #6c757d; line-height: 1.5;
+    flex: 1;
+}
+.report-meta {
+    font-size: 0.75rem; color: #adb5bd;
+    display: flex; align-items: center; gap: 6px;
+}
+.btn-download {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 18px; border-radius: 8px;
+    background: #4ECDC4; color: #fff;
+    font-size: 0.85rem; font-weight: 700;
+    text-decoration: none; transition: all 0.15s;
+    border: none;
+}
+.btn-download:hover {
+    background: #3BABA3; color: #fff;
+    transform: translateY(-1px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-download"></i> Reports & Exports</h1>
+    <p>Download platform data as CSV files</p>
+</div>
+
+<div class="report-grid">
+
+    <!-- Users Report -->
+    <div class="report-card">
+        <div class="report-icon" style="background:linear-gradient(135deg,#4ECDC4,#3BABA3);">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="report-title">All Users Report</div>
+        <div class="report-desc">
+            Name, Email, Role, Trust Score, Balance, Status, Joined Date for all users.
+        </div>
+        <div class="report-meta">
+            <i class="bi bi-person-fill"></i> {{ stats.users }} users
+        </div>
+        <a href="?type=users" class="btn-download">
+            <i class="bi bi-download"></i> Download CSV
+        </a>
+    </div>
+
+    <!-- Sessions Report -->
+    <div class="report-card">
+        <div class="report-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+            <i class="bi bi-camera-video-fill"></i>
+        </div>
+        <div class="report-title">All Sessions Report</div>
+        <div class="report-desc">
+            Title, Tutor, Skill, Level, Type, Date, Time, Credits, Status, Total Bookings.
+        </div>
+        <div class="report-meta">
+            <i class="bi bi-camera-video"></i> {{ stats.sessions }} sessions
+        </div>
+        <a href="?type=sessions" class="btn-download">
+            <i class="bi bi-download"></i> Download CSV
+        </a>
+    </div>
+
+    <!-- Bookings Report -->
+    <div class="report-card">
+        <div class="report-icon" style="background:linear-gradient(135deg,#EC4899,#DB2777);">
+            <i class="bi bi-bookmark-fill"></i>
+        </div>
+        <div class="report-title">All Bookings Report</div>
+        <div class="report-desc">
+            Learner, Session, Tutor, Skill, Date, Credits Paid, Status, Booked At.
+        </div>
+        <div class="report-meta">
+            <i class="bi bi-bookmark"></i> {{ stats.bookings }} bookings
+        </div>
+        <a href="?type=bookings" class="btn-download">
+            <i class="bi bi-download"></i> Download CSV
+        </a>
+    </div>
+
+    <!-- Transactions Report -->
+    <div class="report-card">
+        <div class="report-icon" style="background:linear-gradient(135deg,#10B981,#059669);">
+            <i class="bi bi-coin"></i>
+        </div>
+        <div class="report-title">All Transactions Report</div>
+        <div class="report-desc">
+            User, Transaction Type, Amount, Description, Balance After, Date.
+        </div>
+        <div class="report-meta">
+            <i class="bi bi-receipt"></i> {{ stats.transactions }} transactions
+        </div>
+        <a href="?type=transactions" class="btn-download">
+            <i class="bi bi-download"></i> Download CSV
+        </a>
+    </div>
+
+    <!-- Reviews Report -->
+    <div class="report-card">
+        <div class="report-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);">
+            <i class="bi bi-star-fill"></i>
+        </div>
+        <div class="report-title">All Reviews Report</div>
+        <div class="report-desc">
+            Reviewer, Tutor, Session, Rating, Recommended, Tags, Comment, Date.
+        </div>
+        <div class="report-meta">
+            <i class="bi bi-star"></i> {{ stats.reviews }} reviews
+        </div>
+        <a href="?type=reviews" class="btn-download">
+            <i class="bi bi-download"></i> Download CSV
+        </a>
+    </div>
+
+    <!-- Trust Scores Report -->
+    <div class="report-card">
+        <div class="report-icon" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED);">
+            <i class="bi bi-shield-fill"></i>
+        </div>
+        <div class="report-title">Trust Scores Report</div>
+        <div class="report-desc">
+            Tutor, Score, Label, Sub-scores breakdown, Total Reviews, Avg Rating, Last Calculated.
+        </div>
+        <div class="report-meta">
+            <i class="bi bi-shield"></i> {{ stats.trust_scores }} tutors scored
+        </div>
+        <a href="?type=trust" class="btn-download">
+            <i class="bi bi-download"></i> Download CSV
+        </a>
+    </div>
+
+    <!-- Disputes Report -->
+    <div class="report-card">
+        <div class="report-icon" style="background:linear-gradient(135deg,#EF4444,#DC2626);">
+            <i class="bi bi-flag-fill"></i>
+        </div>
+        <div class="report-title">All Disputes Report</div>
+        <div class="report-desc">
+            Dispute #, Session, Filed By, Against, Reason, Status, Credits, Resolved By, Date.
+        </div>
+        <div class="report-meta">
+            <i class="bi bi-flag"></i> {{ stats.disputes }} disputes
+        </div>
+        <a href="?type=disputes" class="btn-download">
+            <i class="bi bi-download"></i> Download CSV
+        </a>
+    </div>
+
+</div>
+{% endblock %}

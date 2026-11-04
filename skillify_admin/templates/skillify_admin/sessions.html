@@ -1,0 +1,264 @@
+{% extends 'skillify_admin/base.html' %}
+{% block title %}Session Management{% endblock %}
+
+{% block extra_style %}
+<style>
+.btn-action-group { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+
+/* Status badges */
+.badge-upcoming   { display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(16,185,129,0.12);color:#059669; }
+.badge-completed  { display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(102,126,234,0.12);color:#3730a3; }
+.badge-cancelled  { display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(239,68,68,0.1);color:#dc2626; }
+
+/* Level badges */
+.badge-beginner     { display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(16,185,129,0.12);color:#059669; }
+.badge-intermediate { display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(245,158,11,0.12);color:#D97706; }
+.badge-advanced     { display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(239,68,68,0.1);color:#dc2626; }
+
+/* Type badges */
+.badge-one  { display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(59,130,246,0.1);color:#2563EB; }
+.badge-group { display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(139,92,246,0.1);color:#7C3AED; }
+
+/* Booking modal */
+.booking-modal-overlay {
+    display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,0.4);z-index:999;
+    align-items:flex-start;justify-content:center;padding-top:60px;
+}
+.booking-modal-overlay.show { display:flex; }
+.booking-modal {
+    background:#fff;border-radius:14px;padding:28px;
+    width:100%;max-width:800px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.15);
+    max-height:80vh;overflow-y:auto;
+}
+.booking-modal h5 {
+    font-weight:700;color:#2D3748;margin-bottom:20px;font-size:1rem;
+}
+.booking-status-confirmed  { color:#059669;font-weight:600;font-size:0.78rem; }
+.booking-status-completed  { color:#3730a3;font-weight:600;font-size:0.78rem; }
+.booking-status-cancelled  { color:#dc2626;font-weight:600;font-size:0.78rem; }
+.booking-status-in_progress { color:#D97706;font-weight:600;font-size:0.78rem; }
+.booking-status-pending_review { color:#6c757d;font-weight:600;font-size:0.78rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-camera-video-fill"></i> Session Management</h1>
+    <p>View and manage all platform sessions</p>
+</div>
+
+<!-- Filters + Export -->
+<form method="GET" action="{% url 'admin_sessions' %}">
+    <div class="admin-card" style="padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <select name="status" class="select-filter">
+            <option value="all"      {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+            <option value="upcoming" {% if status_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
+            <option value="completed"{% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+            <option value="cancelled"{% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+        <select name="level" class="select-filter">
+            <option value="all"         {% if level_filter == 'all' %}selected{% endif %}>All Levels</option>
+            <option value="beginner"    {% if level_filter == 'beginner' %}selected{% endif %}>Beginner</option>
+            <option value="intermediate"{% if level_filter == 'intermediate' %}selected{% endif %}>Intermediate</option>
+            <option value="advanced"    {% if level_filter == 'advanced' %}selected{% endif %}>Advanced</option>
+        </select>
+        <select name="type" class="select-filter">
+            <option value="all"       {% if type_filter == 'all' %}selected{% endif %}>All Types</option>
+            <option value="one-to-one"{% if type_filter == 'one-to-one' %}selected{% endif %}>One-to-One</option>
+            <option value="group"     {% if type_filter == 'group' %}selected{% endif %}>Group</option>
+        </select>
+        <button type="submit" class="search-btn"><i class="bi bi-funnel"></i> Filter</button>
+        <a href="{% url 'admin_sessions' %}?export=csv&status={{ status_filter }}&level={{ level_filter }}&type={{ type_filter }}"
+           class="btn-teal" style="margin-left:auto;">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+    </div>
+</form>
+
+<!-- Sessions Table -->
+<div class="admin-card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Session Title</th>
+                <th>Tutor</th>
+                <th>Skill</th>
+                <th>Level</th>
+                <th>Date & Time</th>
+                <th>Type</th>
+                <th>Credits</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in session_data %}
+            <tr>
+                <td>
+                    <div style="font-weight:600;color:#2D3748;font-size:0.875rem;">{{ item.session.title }}</div>
+                    <div style="font-size:0.75rem;color:#adb5bd;">{{ item.booking_count }} booking{{ item.booking_count|pluralize }}</div>
+                </td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <img src="{{ item.session.tutor.profile.avatar_url }}"
+                             style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
+                        <span style="font-size:0.85rem;font-weight:500;color:#2D3748;">
+                            {{ item.session.tutor.get_full_name }}
+                        </span>
+                    </div>
+                </td>
+                <td style="font-size:0.85rem;color:#6c757d;">{{ item.session.skill.name }}</td>
+                <td>
+                    {% if item.session.level == 'beginner' %}
+                    <span class="badge-beginner">Beginner</span>
+                    {% elif item.session.level == 'intermediate' %}
+                    <span class="badge-intermediate">Intermediate</span>
+                    {% elif item.session.level == 'advanced' %}
+                    <span class="badge-advanced">Advanced</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="font-size:0.85rem;font-weight:600;color:#2D3748;">{{ item.session.date|date:"M d, Y" }}</div>
+                    <div style="font-size:0.75rem;color:#adb5bd;">
+                        {{ item.session.start_time|time:"g:i A" }} – {{ item.session.end_time|time:"g:i A" }}
+                    </div>
+                </td>
+                <td>
+                    {% if item.session.session_type == 'one-to-one' %}
+                    <span class="badge-one">One-to-One</span>
+                    {% else %}
+                    <span class="badge-group">Group</span>
+                    {% endif %}
+                </td>
+                <td style="font-weight:700;color:#4ECDC4;">{{ item.session.credits_required }}</td>
+                <td>
+                    {% if item.session.status == 'upcoming' %}
+                    <span class="badge-upcoming">Upcoming</span>
+                    {% elif item.session.status == 'completed' %}
+                    <span class="badge-completed">Completed</span>
+                    {% elif item.session.status == 'cancelled' %}
+                    <span class="badge-cancelled">Cancelled</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button type="button" class="btn-sm-outline"
+                            onclick="openBookingModal('{{ item.session.pk }}')">
+                        <i class="bi bi-people"></i> Bookings
+                    </button>
+                </td>
+            </tr>
+
+            <!-- Hidden booking data for modal -->
+            <script>
+            window.bookingData = window.bookingData || {};
+            window.bookingData['{{ item.session.pk }}'] = {
+                title: "{{ item.session.title|escapejs }}",
+                bookings: [
+                    '{% for b in item.bookings %}',
+                    {
+                        learner:         "{{ b.learner.get_full_name|escapejs }}",
+                        avatar:          "{{ b.learner.profile.avatar_url|escapejs }}",
+                        booked_at:       "{{ b.booked_at|date:'M d, Y g:i A' }}",
+                        credits_paid:    '{{ b.credits_paid }}',
+                        status:          "{{ b.status }}",
+                        reschedule:      "{{ b.reschedule_status }}",
+                        tutor_confirmed: "{{ b.tutor_confirmed|yesno:'true,false' }}",
+                        learner_confirmed: "{{ b.learner_confirmed|yesno:'true,false' }}",
+                        zoom_url:        "{{ b.zoom_join_url|default:''|escapejs }}"
+                    },'{% if not forloop.last %}','{% endif %}',
+                    '{% endfor %}'
+                ]
+            };
+            </script>
+
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align:center;padding:40px;color:#adb5bd;">
+                    <i class="bi bi-camera-video" style="font-size:2rem;display:block;margin-bottom:10px;"></i>
+                    No sessions found
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Booking Modal -->
+<div class="booking-modal-overlay" id="bookingModalOverlay">
+    <div class="booking-modal">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h5 style="margin:0;"><i class="bi bi-people" style="color:#4ECDC4;"></i> <span id="modalSessionTitle"></span> — Bookings</h5>
+            <button onclick="closeBookingModal()" class="btn-sm-outline" style="padding:4px 10px;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div id="bookingModalContent"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+function openBookingModal(sessionId) {
+    const data = window.bookingData[sessionId];
+    if (!data) return;
+
+    document.getElementById('modalSessionTitle').textContent = data.title;
+
+    const statusColors = {
+        confirmed:      '#059669',
+        completed:      '#3730a3',
+        cancelled:      '#dc2626',
+        in_progress:    '#D97706',
+        pending_review: '#6c757d',
+    };
+
+    let html = '';
+    if (data.bookings.length === 0) {
+        html = '<div style="text-align:center;padding:30px;color:#adb5bd;">No bookings for this session</div>';
+    } else {
+        html = '<table style="width:100%;border-collapse:collapse;">';
+        html += '<thead><tr style="background:#f8fafc;">';
+        html += '<th style="padding:10px 12px;font-size:0.72rem;font-weight:700;color:#6c757d;text-transform:uppercase;border-bottom:1px solid #e2e8f0;text-align:left;">Learner</th>';
+        html += '<th style="padding:10px 12px;font-size:0.72rem;font-weight:700;color:#6c757d;text-transform:uppercase;border-bottom:1px solid #e2e8f0;text-align:left;">Booked At</th>';
+        html += '<th style="padding:10px 12px;font-size:0.72rem;font-weight:700;color:#6c757d;text-transform:uppercase;border-bottom:1px solid #e2e8f0;text-align:left;">Credits</th>';
+        html += '<th style="padding:10px 12px;font-size:0.72rem;font-weight:700;color:#6c757d;text-transform:uppercase;border-bottom:1px solid #e2e8f0;text-align:left;">Status</th>';
+        html += '<th style="padding:10px 12px;font-size:0.72rem;font-weight:700;color:#6c757d;text-transform:uppercase;border-bottom:1px solid #e2e8f0;text-align:left;">Confirmed</th>';
+        html += '<th style="padding:10px 12px;font-size:0.72rem;font-weight:700;color:#6c757d;text-transform:uppercase;border-bottom:1px solid #e2e8f0;text-align:left;">Zoom</th>';
+        html += '</tr></thead><tbody>';
+
+        // Filter out invalid bookings and ensure all have required properties
+        const validBookings = data.bookings.filter(b => b && typeof b === 'object' && b.status && b.learner);
+        
+        validBookings.forEach(b => {
+            const statusValue = String(b.status).replace(/_/g, ' ').toUpperCase();
+            const color = statusColors[b.status] || '#6c757d';
+            html += `<tr style="border-bottom:1px solid #f0f4f8;">`;
+            html += `<td style="padding:12px;"><div style="display:flex;align-items:center;gap:8px;"><img src="${b.avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"><span style="font-size:0.85rem;font-weight:600;color:#2D3748;">${b.learner}</span></div></td>`;
+            html += `<td style="padding:12px;font-size:0.82rem;color:#6c757d;">${b.booked_at}</td>`;
+            html += `<td style="padding:12px;font-weight:700;color:#4ECDC4;">${b.credits_paid}</td>`;
+            html += `<td style="padding:12px;"><span style="color:${color};font-weight:700;font-size:0.78rem;">${statusValue}</span></td>`;
+            html += `<td style="padding:12px;font-size:0.82rem;">T:${b.tutor_confirmed ? '✅' : '❌'} L:${b.learner_confirmed ? '✅' : '❌'}</td>`;
+            html += `<td style="padding:12px;">${b.zoom_url ? `<a href="${b.zoom_url}" target="_blank" style="color:#4ECDC4;font-size:0.78rem;font-weight:600;">Join</a>` : '<span style="color:#adb5bd;font-size:0.78rem;">—</span>'}</td>`;
+            html += `</tr>`;
+        });
+
+        html += '</tbody></table>';
+    }
+
+    document.getElementById('bookingModalContent').innerHTML = html;
+    document.getElementById('bookingModalOverlay').classList.add('show');
+}
+
+function closeBookingModal() {
+    document.getElementById('bookingModalOverlay').classList.remove('show');
+}
+
+document.getElementById('bookingModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeBookingModal();
+});
+</script>
+{% endblock %}

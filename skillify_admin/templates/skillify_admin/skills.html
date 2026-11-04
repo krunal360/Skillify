@@ -1,0 +1,413 @@
+{% extends 'skillify_admin/base.html' %}
+{% block title %}Skill Management{% endblock %}
+
+{% block extra_style %}
+<style>
+.skill-icon-preview {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(78,205,196,0.12);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #4ECDC4;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.btn-action-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.edit-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+}
+.edit-modal-overlay.show {
+    display: flex;
+}
+.edit-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+}
+.edit-modal h5 {
+    font-weight: 700;
+    color: #2D3748;
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+.modal-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #2D3748;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+    background-color: #fff;
+}
+
+select.modal-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232D3748' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 32px;
+    cursor: pointer;
+}
+
+.modal-input:focus { 
+    border-color: #4ECDC4; 
+    box-shadow: 0 0 0 3px rgba(78,205,196,0.1);
+}
+.modal-footer-btns {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+.icon-preview-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: #6c757d;
+    border: 1px solid #e2e8f0;
+}
+.icon-preview-box i {
+    font-size: 1.2rem;
+    color: #4ECDC4;
+}
+
+/* Style for the dropdown select */
+.search-input[type="text"],
+.search-input[type="search"],
+select.search-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #2D3748;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+select.search-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232D3748' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 32px;
+}
+
+.search-input:focus,
+select.search-input:focus {
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78,205,196,0.1);
+}
+
+@media (max-width: 768px) {
+    .admin-card[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-lightbulb"></i> Skill Management</h1>
+    <p>Add, edit, and manage skills on the platform</p>
+</div>
+
+<!-- Add Skill Form -->
+<form method="POST" action="{% url 'admin_skills' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add">
+    <div class="admin-card" style="padding:20px 16px;margin-bottom:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:12px;align-items:end;flex-wrap:wrap;">
+            <!-- Skill Name Input -->
+            <div>
+                <label style="font-size:0.82rem;font-weight:600;color:#2D3748;margin-bottom:6px;display:block;">Skill Name</label>
+                <input type="text" name="name" id="addSkillName" class="search-input"
+                       placeholder="e.g., Web Development"
+                       style="width:100%;" required>
+            </div>
+
+            <!-- Icon Dropdown -->
+            <div>
+                <label style="font-size:0.82rem;font-weight:600;color:#2D3748;margin-bottom:6px;display:block;">Select Icon</label>
+                <select name="icon" id="addIconSelect" class="search-input" style="width:100%;padding:9px 12px;" required>
+                    <option value="bi-lightbulb">💡 Lightbulb</option>
+                    <option value="bi-code-square">💻 Code</option>
+                    <option value="bi-brush">🎨 Design</option>
+                    <option value="bi-pencil-square">✏️ Writing</option>
+                    <option value="bi-music-note">🎵 Music</option>
+                    <option value="bi-controller">🎮 Gaming</option>
+                    <option value="bi-camera">📷 Photography</option>
+                    <option value="bi-easel">🖼️ Drawing</option>
+                    <option value="bi-mic">🎤 Speaking</option>
+                    <option value="bi-book">📚 Learning</option>
+                    <option value="bi-briefcase">💼 Business</option>
+                    <option value="bi-graph-up">📈 Analytics</option>
+                    <option value="bi-shield-lock">🔒 Security</option>
+                    <option value="bi-cloud">☁️ Cloud</option>
+                    <option value="bi-database">🗄️ Database</option>
+                    <option value="bi-settings">⚙️ DevOps</option>
+                    <option value="bi-translate">🌐 Languages</option>
+                    <option value="bi-chat-dots">💬 Communication</option>
+                    <option value="bi-star">⭐ Leadership</option>
+                    <option value="bi-heart">❤️ Personal Dev</option>
+                    <option value="bi-bulb">💡 Innovation</option>
+                    <option value="bi-gear">🔧 Engineering</option>
+                </select>
+            </div>
+
+            <!-- Preview -->
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="icon-preview-box" style="margin-bottom:0;">
+                    <i id="addIconPreview" class="bi bi-lightbulb"></i>
+                    <span style="font-size:0.78rem;">Preview</span>
+                </div>
+            </div>
+
+            <!-- Add Skill Button -->
+            <button type="submit" class="btn-teal" style="padding:9px 16px;height:fit-content;">
+                <i class="bi bi-plus-lg"></i> Add
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Skills Table -->
+<div class="admin-card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Skill</th>
+                <th>Icon</th>
+                <th>Sessions</th>
+                <th>Tutors</th>
+                <th>Bookings</th>
+                <th>Learners Interested</th>
+                <th>Avg Rating</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in skill_data %}
+            <tr>
+                <td style="font-weight:700;color:#2D3748;">{{ item.skill.name }}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="skill-icon-preview">
+                            <i class="bi {{ item.skill.icon }}"></i>
+                        </div>
+                        <span style="font-size:0.78rem;color:#6c757d;">{{ item.skill.icon }}</span>
+                    </div>
+                </td>
+                <td style="font-weight:600;color:#2D3748;">{{ item.sessions }}</td>
+                <td style="font-weight:600;color:#2D3748;">{{ item.tutors }}</td>
+                <td style="font-weight:600;color:#2D3748;">{{ item.bookings }}</td>
+                <td style="font-weight:600;color:#2D3748;">{{ item.learners }}</td>
+                <td>
+                    {% if item.avg_rating > 0 %}
+                    <span style="color:#F59E0B;font-weight:700;">★ {{ item.avg_rating }}</span>
+                    {% else %}
+                    <span style="color:#adb5bd;">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="btn-action-group">
+                        <!-- Edit -->
+                        <button type="button" class="btn-sm-outline"
+                                onclick="openEditModal('{{ item.skill.pk }}', '{{ item.skill.name|escapejs }}', '{{ item.skill.icon|escapejs }}')">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+
+                        <!-- Delete -->
+                        <form method="POST" action="{% url 'admin_skills' %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="skill_id" value="{{ item.skill.pk }}">
+                            <button type="submit" class="btn-sm-danger"
+                                    onclick="return confirm('Delete skill &quot;{{ item.skill.name }}&quot;? This cannot be undone.')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align:center;padding:40px;color:#adb5bd;">
+                    <i class="bi bi-lightbulb" style="font-size:2rem;display:block;margin-bottom:10px;"></i>
+                    No skills found
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Edit Modal -->
+<div class="edit-modal-overlay" id="editModalOverlay">
+    <div class="edit-modal">
+        <h5><i class="bi bi-pencil" style="color:#4ECDC4;"></i> Edit Skill</h5>
+        <form method="POST" action="{% url 'admin_skills' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="skill_id" id="editSkillId">
+
+            <label style="font-size:0.82rem;font-weight:600;color:#2D3748;margin-bottom:6px;display:block;">Skill Name</label>
+            <input type="text" name="name" id="editSkillName" class="modal-input"
+                   placeholder="Skill name" required>
+
+            <label style="font-size:0.82rem;font-weight:600;color:#2D3748;margin-bottom:6px;display:block;">Select Icon</label>
+            <select name="icon" id="editSkillIcon" class="modal-input" style="width:100%;padding:9px 12px;margin-bottom:12px;" required onchange="updateEditPreview(this.value)">
+                <option value="bi-lightbulb">💡 Lightbulb</option>
+                <option value="bi-code-square">💻 Code</option>
+                <option value="bi-brush">🎨 Design</option>
+                <option value="bi-pencil-square">✏️ Writing</option>
+                <option value="bi-music-note">🎵 Music</option>
+                <option value="bi-controller">🎮 Gaming</option>
+                <option value="bi-camera">📷 Photography</option>
+                <option value="bi-easel">🖼️ Drawing</option>
+                <option value="bi-mic">🎤 Speaking</option>
+                <option value="bi-book">📚 Learning</option>
+                <option value="bi-briefcase">💼 Business</option>
+                <option value="bi-graph-up">📈 Analytics</option>
+                <option value="bi-shield-lock">🔒 Security</option>
+                <option value="bi-cloud">☁️ Cloud</option>
+                <option value="bi-database">🗄️ Database</option>
+                <option value="bi-settings">⚙️ DevOps</option>
+                <option value="bi-translate">🌐 Languages</option>
+                <option value="bi-chat-dots">💬 Communication</option>
+                <option value="bi-star">⭐ Leadership</option>
+                <option value="bi-heart">❤️ Personal Dev</option>
+                <option value="bi-bulb">💡 Innovation</option>
+                <option value="bi-gear">🔧 Engineering</option>
+            </select>
+
+            <div class="icon-preview-box">
+                <i id="editIconPreview" class="bi bi-lightbulb"></i>
+                <span id="editIconLabel" style="font-size:0.78rem;">bi-lightbulb</span>
+            </div>
+
+            <div class="modal-footer-btns">
+                <button type="submit" class="btn-teal">
+                    <i class="bi bi-check-lg"></i> Save Changes
+                </button>
+                <button type="button" class="btn-sm-outline" onclick="closeEditModal()"
+                        style="padding:8px 16px;">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+// Icon options list
+const ICON_OPTIONS = [
+    { value: 'bi-lightbulb', label: '💡 Lightbulb' },
+    { value: 'bi-code-square', label: '💻 Code' },
+    { value: 'bi-brush', label: '🎨 Design' },
+    { value: 'bi-pencil-square', label: '✏️ Writing' },
+    { value: 'bi-music-note', label: '🎵 Music' },
+    { value: 'bi-controller', label: '🎮 Gaming' },
+    { value: 'bi-camera', label: '📷 Photography' },
+    { value: 'bi-easel', label: '🖼️ Drawing' },
+    { value: 'bi-mic', label: '🎤 Speaking' },
+    { value: 'bi-book', label: '📚 Learning' },
+    { value: 'bi-briefcase', label: '💼 Business' },
+    { value: 'bi-graph-up', label: '📈 Analytics' },
+    { value: 'bi-shield-lock', label: '🔒 Security' },
+    { value: 'bi-cloud', label: '☁️ Cloud' },
+    { value: 'bi-database', label: '🗄️ Database' },
+    { value: 'bi-settings', label: '⚙️ DevOps' },
+    { value: 'bi-translate', label: '🌐 Languages' },
+    { value: 'bi-chat-dots', label: '💬 Communication' },
+    { value: 'bi-star', label: '⭐ Leadership' },
+    { value: 'bi-heart', label: '❤️ Personal Dev' },
+    { value: 'bi-bulb', label: '💡 Innovation' },
+    { value: 'bi-gear', label: '🔧 Engineering' }
+];
+
+// Add skill icon preview - updated for dropdown
+document.getElementById('addIconSelect').addEventListener('change', function() {
+    const preview = document.getElementById('addIconPreview');
+    const selectedValue = this.value;
+    preview.className = 'bi ' + selectedValue;
+});
+
+// Initialize preview on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const addIconSelect = document.getElementById('addIconSelect');
+    if (addIconSelect) {
+        addIconSelect.dispatchEvent(new Event('change'));
+    }
+});
+
+// Edit modal
+function openEditModal(id, name, icon) {
+    document.getElementById('editSkillId').value   = id;
+    document.getElementById('editSkillName').value = name;
+    const editIconSelect = document.getElementById('editSkillIcon');
+    editIconSelect.value = icon;  // Set the dropdown value
+    updateEditPreview(icon);
+    document.getElementById('editModalOverlay').classList.add('show');
+}
+
+function closeEditModal() {
+    document.getElementById('editModalOverlay').classList.remove('show');
+}
+
+function updateEditPreview(iconClass) {
+    const preview = document.getElementById('editIconPreview');
+    const label = document.getElementById('editIconLabel');
+    const sanitizedIcon = iconClass || 'bi-lightbulb';
+    preview.className = 'bi ' + sanitizedIcon;
+    label.textContent = sanitizedIcon;
+}
+
+// Close modal on overlay click
+const editModalOverlay = document.getElementById('editModalOverlay');
+if (editModalOverlay) {
+    editModalOverlay.addEventListener('click', function(e) {
+        if (e.target === this) closeEditModal();
+    });
+}
+
+// Edit skill icon preview
+const editSkillIcon = document.getElementById('editSkillIcon');
+if (editSkillIcon) {
+    editSkillIcon.addEventListener('input', function() {
+        updateEditPreview(this.value);
+    });
+}
+</script>
+{% endblock %}

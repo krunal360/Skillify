@@ -1,0 +1,160 @@
+{% extends 'skillify_admin/base.html' %}
+{% block title %}User Management{% endblock %}
+
+{% block extra_style %}
+<style>
+.user-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.user-name-cell img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.user-name-cell .name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #2D3748;
+}
+.btn-action-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-people-fill"></i> User Management</h1>
+    <p>View, search, and manage all users</p>
+</div>
+
+<!-- Search + Filter + Export -->
+<form method="GET" action="{% url 'admin_users' %}">
+    <div class="admin-card" style="padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <input type="text" name="search" class="search-input"
+               placeholder="Search by name or email..."
+               value="{{ search }}">
+        <select name="role" class="select-filter">
+            <option value="all" {% if role_filter == 'all' %}selected{% endif %}>All Roles</option>
+            <option value="tutor" {% if role_filter == 'tutor' %}selected{% endif %}>Tutor</option>
+            <option value="learner" {% if role_filter == 'learner' %}selected{% endif %}>Learner</option>
+        </select>
+        <button type="submit" class="search-btn">
+            <i class="bi bi-search"></i>
+        </button>
+        <a href="{% url 'admin_users' %}?export=csv&search={{ search }}&role={{ role_filter }}"
+           class="btn-teal" style="margin-left:auto;">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+    </div>
+</form>
+
+<!-- Table -->
+<div class="admin-card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Trust</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in user_data %}
+            <tr>
+                <td>
+                    <div class="user-name-cell">
+                        <img src="{{ item.user.profile.avatar_url }}" alt="{{ item.user.get_full_name }}">
+                        <span class="name">{{ item.user.get_full_name|default:item.user.username }}</span>
+                    </div>
+                </td>
+                <td style="color:#6c757d;font-size:0.85rem;">{{ item.user.email }}</td>
+                <td>
+                    {% if item.role == 'tutor' %}
+                    <span class="badge-role-tutor">tutor</span>
+                    {% elif item.role == 'learner' %}
+                    <span class="badge-role-learner">learner</span>
+                    {% else %}
+                    <span style="color:#adb5bd;font-size:0.82rem;">—</span>
+                    {% endif %}
+                </td>
+                <td style="font-weight:600;color:#2D3748;">
+                    {% if item.role == 'tutor' %}
+                        {{ item.trust }}
+                    {% else %}
+                        <span style="color:#adb5bd;">—</span>
+                    {% endif %}
+                </td>
+                <td style="font-weight:600;color:#2D3748;">{{ item.balance }}</td>
+                <td>
+                    {% if item.is_active %}
+                    <span class="badge-active">Active</span>
+                    {% else %}
+                    <span class="badge-suspended">Suspended</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="btn-action-group">
+                        <!-- Suspend / Unsuspend -->
+                        <form method="POST" action="{% url 'admin_users' %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_id" value="{{ item.user.pk }}">
+                            {% if item.is_active %}
+                            <input type="hidden" name="action" value="suspend">
+                            <button type="submit" class="btn-sm-outline"
+                                    onclick="return confirm('Suspend {{ item.user.get_full_name }}?')">
+                                Suspend
+                            </button>
+                            {% else %}
+                            <input type="hidden" name="action" value="unsuspend">
+                            <button type="submit" class="btn-sm-outline" style="color:#10B981;border-color:#10B981;">
+                                Activate
+                            </button>
+                            {% endif %}
+                        </form>
+
+                        <!-- View Profile -->
+                        {% if item.role == 'tutor' %}
+                        <a href="/profile/{{ item.user.pk }}/" target="_blank" class="btn-sm-outline">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        {% endif %}
+
+                        <!-- Delete -->
+                        {% if not item.user.is_staff %}
+                        <form method="POST" action="{% url 'admin_users' %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_id" value="{{ item.user.pk }}">
+                            <input type="hidden" name="action" value="delete">
+                            <button type="submit" class="btn-sm-danger"
+                                    onclick="return confirm('Permanently delete {{ item.user.get_full_name }}? This cannot be undone.')">
+                                Delete
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align:center;padding:40px;color:#adb5bd;">
+                    <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:10px;"></i>
+                    No users found
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

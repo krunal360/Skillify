@@ -1,0 +1,787 @@
+{% load static %}
+{% load dict_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Sessions - Skillify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; }
+        .navbar { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .navbar-brand { font-weight: 700; font-size: 1.4rem; }
+        .navbar-brand i { color: #667eea; }
+
+        .page-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 0 60px; color: #fff;
+        }
+        .hero-stat {
+            background: rgba(255,255,255,0.15); border-radius: 12px;
+            padding: 16px 20px; text-align: center; backdrop-filter: blur(10px);
+        }
+        .hero-stat .num { font-size: 1.8rem; font-weight: 800; }
+        .hero-stat .lbl { font-size: 0.82rem; opacity: 0.85; }
+
+        /* Tab pills */
+        .session-tabs { background: #fff; border-radius: 16px; padding: 6px; display: inline-flex; gap: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); flex-wrap: wrap; }
+        .tab-pill {
+            padding: 9px 22px; border-radius: 12px; border: none; background: transparent;
+            font-weight: 600; color: #6c757d; cursor: pointer; transition: all 0.2s; font-size: 0.9rem;
+        }
+        .tab-pill.active { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; box-shadow: 0 4px 12px rgba(102,126,234,0.35); }
+        .tab-pill .count-badge { display: inline-block; min-width: 20px; height: 20px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; line-height: 20px; text-align: center; margin-left: 6px; background: rgba(0,0,0,0.1); }
+        .tab-pill.active .count-badge { background: rgba(255,255,255,0.3); }
+
+        .card { border: none; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 14px; }
+
+        /* Session cards */
+        .session-card { border: 2px solid #e9ecef; border-radius: 14px; padding: 20px; margin-bottom: 14px; transition: all 0.2s; background: #fff; }
+        .session-card:hover { border-color: #667eea; box-shadow: 0 4px 18px rgba(102,126,234,0.12); }
+        .session-card.completed { border-color: #e9ecef; opacity: 0.85; }
+        .session-card.cancelled { border-color: #fee2e2; background: #fff8f8; }
+        .session-card.inprogress { border-color: #10B981; background: #f0fdf4; box-shadow: 0 4px 18px rgba(16,185,129,0.12); }
+        .session-card.reschedule-pending { border-color: #f59e0b; background: #fffbeb; }
+
+        .session-title { font-size: 1rem; font-weight: 700; color: #2D3748; margin-bottom: 6px; }
+        .session-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .meta-item { display: inline-flex; align-items: center; gap: 5px; font-size: 0.83rem; color: #6c757d; }
+        .meta-item i { color: #667eea; }
+
+        .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+        .status-upcoming    { background: rgba(16,185,129,0.12);  color: #065F46; }
+        .status-inprogress  { background: rgba(16,185,129,0.2);   color: #065F46; }
+        .status-completed   { background: rgba(102,126,234,0.12); color: #3730a3; }
+        .status-cancelled   { background: rgba(239,68,68,0.1);    color: #991B1B; }
+        .status-pending     { background: rgba(245,158,11,0.12);  color: #92400E; }
+        .status-waiting     { background: rgba(245,158,11,0.12);  color: #92400E; }
+        .status-reschedule  { background: rgba(245,158,11,0.15);  color: #92400E; }
+
+        .credit-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; border-radius: 20px; background: rgba(102,126,234,0.1); color: #3730a3; font-weight: 700; font-size: 0.85rem; }
+
+        .empty-state { text-align: center; padding: 50px 20px; }
+        .empty-state i { font-size: 3rem; color: #ced4da; }
+        .empty-state p { color: #6c757d; margin-top: 12px; }
+
+        /* Bookings table inside tutor card */
+        .learner-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .learner-row:last-child { border-bottom: none; }
+        .learner-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+
+        /* Buttons */
+        .btn-action     { border-radius: 8px; font-weight: 600; font-size: 0.85rem; padding: 7px 16px; border: none; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+        .btn-complete   { background: linear-gradient(135deg, #10B981, #059669); color: #fff; }
+        .btn-complete:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); color: #fff; }
+        .btn-start      { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+        .btn-start:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.3); color: #fff; }
+        .btn-zoom       { background: linear-gradient(135deg, #2D8CFF, #0066CC); color: #fff; }
+        .btn-zoom:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(45,140,255,0.3); color: #fff; }
+        .btn-create     { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 10px; font-weight: 700; padding: 10px 22px; border: none; }
+        .btn-create:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(102,126,234,0.35); color: #fff; }
+        .btn-reschedule { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+        .btn-reschedule:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,0.3); color: #fff; }
+        .btn-accept     { background: linear-gradient(135deg, #10B981, #059669); color: #fff; }
+        .btn-accept:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); color: #fff; }
+        .btn-decline    { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+        .btn-decline:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,0.3); color: #fff; }
+
+        /* Live pulse indicator */
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #10B981; display: inline-block; animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+            70%  { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+
+        /* Info boxes */
+        .waiting-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 10px 14px; font-size: 0.84rem; color: #92400E; display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+        .reschedule-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px 14px; font-size: 0.84rem; color: #92400E; margin-top: 10px; }
+        .reschedule-box .new-time { font-weight: 700; color: #78350f; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'index' %}"><i class="bi bi-lightbulb-fill"></i> Skillify</a>
+        <div class="ms-auto d-flex gap-2 align-items-center">
+           <a href="{% url 'inbox' %}" class="btn btn-outline-secondary btn-sm position-relative">
+    <i class="bi bi-chat-dots"></i> Messages
+    <span id="navUnreadCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;font-size:0.6rem;"></span>
+</a>
+<a href="{% url 'my_disputes' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-flag"></i> My Disputes
+</a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-grid"></i> Dashboard
+            </a>
+            {% if profile.role == 'tutor' %}
+            <a href="{% url 'create_session' %}" class="btn btn-create btn-sm">
+                <i class="bi bi-plus-lg"></i> New Session
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<div class="page-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <h1 class="fw-bold mb-1" style="font-size:1.8rem;">
+                    <i class="bi bi-calendar-week"></i> My Sessions
+                </h1>
+                <p class="mb-0" style="opacity:0.85;">
+                    {% if profile.role == 'tutor' %}Manage your teaching sessions{% else %}Track your learning journey{% endif %}
+                </p>
+            </div>
+            <div class="col-md-6">
+                <div class="row g-3">
+                    {% if profile.role == 'tutor' %}
+                    <div class="col-4">
+                        <div class="hero-stat">
+                            <div class="num">{{ upcoming_sessions.count }}</div>
+                            <div class="lbl">Upcoming</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="hero-stat">
+                            <div class="num">{{ inprogress_bookings.count }}</div>
+                            <div class="lbl">Live Now</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="hero-stat">
+                            <div class="num">{{ wallet.balance }}</div>
+                            <div class="lbl">Credits</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-4">
+                        <div class="hero-stat">
+                            <div class="num">{{ upcoming_bookings.count }}</div>
+                            <div class="lbl">Upcoming</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="hero-stat">
+                            <div class="num">{{ inprogress_bookings.count }}</div>
+                            <div class="lbl">Live Now</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="hero-stat">
+                            <div class="num">{{ wallet.balance }}</div>
+                            <div class="lbl">Credits</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4" style="margin-top:-28px;">
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    {% if profile.role == 'tutor' %}
+    <!-- TUTOR VIEW -->
+
+    <div class="mb-4 d-flex align-items-center gap-3 flex-wrap">
+        <div class="session-tabs">
+            {% if inprogress_bookings.count > 0 %}
+            <button class="tab-pill active" onclick="showTab('live', this)">
+                <span class="live-dot"></span> Live Now
+                <span class="count-badge">{{ inprogress_bookings.count }}</span>
+            </button>
+            {% endif %}
+            <button class="tab-pill {% if inprogress_bookings.count == 0 %}active{% endif %}" onclick="showTab('upcoming', this)">
+                <i class="bi bi-calendar-check"></i> Upcoming
+                <span class="count-badge">{{ upcoming_sessions.count }}</span>
+            </button>
+            <button class="tab-pill" onclick="showTab('completed', this)">
+                <i class="bi bi-check-circle"></i> Past / Completed
+                <span class="count-badge">{{ completed_sessions.count }}</span>
+            </button>
+            <button class="tab-pill" onclick="showTab('bookings', this)">
+                <i class="bi bi-people"></i> Bookings
+                <span class="count-badge">{{ bookings.count }}</span>
+            </button>
+        </div>
+        <a href="{% url 'create_session' %}" class="btn btn-create ms-auto">
+            <i class="bi bi-plus-lg"></i> Create New Session
+        </a>
+    </div>
+
+    <!-- Tab: Live / In-Progress Sessions -->
+    <div id="tab-live" {% if inprogress_bookings.count == 0 %}style="display:none;"{% endif %}>
+        {% for booking in inprogress_bookings %}
+        <div class="session-card inprogress">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="live-dot"></span>
+                        <span class="session-title mb-0">{{ booking.session.title }}</span>
+                        <span class="status-badge status-inprogress"><i class="bi bi-broadcast"></i> Live</span>
+                    </div>
+                    <div class="session-meta mb-3">
+                        <span class="meta-item"><i class="bi bi-person"></i> {{ booking.learner.get_full_name }}</span>
+                        <span class="meta-item"><i class="bi bi-calendar3"></i> {{ booking.session.date|date:"D, M d, Y" }}</span>
+                        <span class="meta-item"><i class="bi bi-clock"></i> {{ booking.session.start_time|time:"g:i A" }} – {{ booking.session.end_time|time:"g:i A" }}</span>
+                        <span class="meta-item"><i class="bi bi-lightbulb"></i> {{ booking.session.skill.name }}</span>
+                            <span class="meta-item"><i class="bi bi-bar-chart"></i> {{ booking.session.get_level_display }}</span>
+                    </div>
+                    <span class="credit-badge"><i class="bi bi-coin"></i> {{ booking.credits_paid }} credits</span>
+                    {% if booking.tutor_confirmed and not booking.learner_confirmed %}
+                    <div class="waiting-box mt-2">
+                        <i class="bi bi-hourglass-split"></i>
+                        Waiting for learner to confirm. Credits auto-transfer after 24 hours.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="d-flex flex-column gap-2 align-items-end">
+                    {% if booking.zoom_host_url %}
+                    <a href="{{ booking.zoom_host_url }}" target="_blank" class="btn-action btn-zoom">
+                        <i class="bi bi-camera-video-fill"></i> Open Zoom
+                    </a>
+                    {% endif %}
+                    {% if not booking.tutor_confirmed %}
+                    <form method="POST" action="/mark-complete/{{ booking.pk }}/">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-action btn-complete"
+                                onclick="return confirm('Mark this session as complete?')">
+                            <i class="bi bi-check-lg"></i> Mark Complete
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if booking.pk in filed_dispute_map %}
+    <a href="/disputes/{{ filed_dispute_map|get_item:booking.pk }}/"
+       class="btn-action" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;">
+        <i class="bi bi-flag-fill"></i> View Dispute
+    </a>
+{% elif booking.pk in against_dispute_map %}
+    <a href="/disputes/{{ against_dispute_map|get_item:booking.pk }}/"
+       class="btn-action" style="background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;">
+        <i class="bi bi-shield-fill"></i> Respond to Dispute
+    </a>
+{% else %}
+    <a href="/disputes/file/{{ booking.pk }}/" class="btn-action btn-decline">
+        <i class="bi bi-flag-fill"></i> File Dispute
+    </a>
+{% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="bi bi-broadcast"></i>
+            <p>No live sessions right now.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Tab: Upcoming Sessions -->
+    <div id="tab-upcoming" {% if inprogress_bookings.count > 0 %}style="display:none;"{% endif %}>
+        {% for session in upcoming_sessions %}
+        <div class="session-card">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="session-title mb-0">{{ session.title }}</span>
+                        <span class="status-badge status-upcoming">
+                            <i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> Upcoming
+                        </span>
+                    </div>
+                    <div class="session-meta mb-3">
+                        <span class="meta-item"><i class="bi bi-calendar3"></i> {{ session.date|date:"D, M d, Y" }}</span>
+                        <span class="meta-item"><i class="bi bi-clock"></i> {{ session.start_time|time:"g:i A" }} – {{ session.end_time|time:"g:i A" }}</span>
+                        <span class="meta-item"><i class="bi bi-lightbulb"></i> {{ session.skill.name }}</span>
+                        <span class="meta-item"><i class="bi bi-bar-chart"></i> {{ session.get_level_display }}</span>
+                        <span class="meta-item"><i class="bi bi-people"></i> {{ session.active_bookings_count|default:"0" }}/{{ session.max_participants }} booked</span>
+                    </div>
+                    <span class="credit-badge"><i class="bi bi-coin"></i> {{ session.credits_required }} credits/seat</span>
+                </div>
+                <div class="d-flex flex-column gap-2 align-items-end">
+                    <!-- Start Session button (15 min before) -->
+                    {% for s_id, b_pk in startable.items %}
+                        {% if s_id == session.id %}
+                        <a href="/start-session/{{ b_pk }}/" class="btn-action btn-start">
+                            <i class="bi bi-play-circle-fill"></i> Start Session
+                        </a>
+                        {% endif %}
+                
+                    {% endfor %}
+                    {% if session.id not in startable %}
+                    <span class="meta-item" style="font-size:0.8rem;color:#6c757d;">
+                        <i class="bi bi-clock-history"></i> Start button appears 15 min before
+                    </span>
+                    {% endif %}
+
+                    <!-- Reschedule button — always visible for tutor -->
+                    {% if session.id not in startable and session.id not in no_reschedule_ids %}
+<a href="{% url 'reschedule_session' session.pk %}" class="btn-action btn-reschedule">
+    <i class="bi bi-calendar-event"></i> Reschedule
+</a>
+{% elif session.id in no_reschedule_ids and session.id not in startable %}
+<span class="meta-item" style="font-size:0.8rem;color:#ef4444;">
+    <i class="bi bi-clock-history"></i> Cannot reschedule within 12 hours
+</span>
+{% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="bi bi-calendar-plus"></i>
+            <p>No upcoming sessions. <a href="{% url 'create_session' %}">Create one now!</a></p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Tab: Past / Completed Sessions -->
+    <div id="tab-completed" style="display:none;">
+        {% for session in completed_sessions %}
+        <div class="session-card completed">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="session-title mb-0">{{ session.title }}</span>
+                        {% if session.status == 'completed' %}
+                        <span class="status-badge status-completed"><i class="bi bi-check-circle-fill" style="font-size:0.7rem;"></i> Completed</span>
+                        {% elif session.status == 'cancelled' %}
+                        <span class="status-badge status-cancelled"><i class="bi bi-x-circle-fill" style="font-size:0.7rem;"></i> Cancelled</span>
+                        {% else %}
+                        <span class="status-badge status-completed"><i class="bi bi-clock-history" style="font-size:0.7rem;"></i> Past</span>
+                        {% endif %}
+                    </div>
+                    <div class="session-meta">
+                        <span class="meta-item"><i class="bi bi-calendar3"></i> {{ session.date|date:"D, M d, Y" }}</span>
+                        <span class="meta-item"><i class="bi bi-clock"></i> {{ session.start_time|time:"g:i A" }} – {{ session.end_time|time:"g:i A" }}</span>
+                        <span class="meta-item"><i class="bi bi-lightbulb"></i> {{ session.skill.name }}</span>
+                        <span class="meta-item"><i class="bi bi-bar-chart"></i> {{ session.get_level_display }}</span>
+                        <span class="meta-item"><i class="bi bi-people"></i> {{ session.bookings.count }} learner{{ session.bookings.count|pluralize }}</span>
+                    </div>
+                </div>
+                <span class="credit-badge"><i class="bi bi-coin"></i> {{ session.credits_required }} credits</span>
+            </div>
+            <!-- Dispute status for tutor -->
+            {% with bookings=session.bookings.all %}
+                {% if bookings %}
+                    {% for booking in bookings %}
+                        {% if booking.pk|stringformat:"s" in dispute_info %}
+                            {% with d=dispute_info|get_item:booking.pk|stringformat:"s" %}
+                                {% if d.status == 'resolved' %}
+                                <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(16,185,129,0.12);color:#059669;font-weight:700;font-size:0.82rem;margin-top:10px;">
+                                    <i class="bi bi-check-circle-fill"></i> Dispute Resolved
+                                </span>
+                                {% elif d.status == 'rejected' %}
+                                <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(239,68,68,0.1);color:#dc2626;font-weight:700;font-size:0.82rem;margin-top:10px;">
+                                    <i class="bi bi-x-circle-fill"></i> Dispute Rejected
+                                </span>
+                                {% elif d.status == 'under_review' %}
+                                <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(59,130,246,0.1);color:#2563EB;font-weight:700;font-size:0.82rem;margin-top:10px;">
+                                    <i class="bi bi-hourglass-split"></i> Under Review
+                                </span>
+                                {% else %}
+                                <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(245,158,11,0.1);color:#D97706;font-weight:700;font-size:0.82rem;margin-top:10px;">
+                                    <i class="bi bi-flag-fill"></i> Dispute Open
+                                </span>
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="bi bi-clock-history"></i>
+            <p>No completed sessions yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Tab: Bookings -->
+    <div id="tab-bookings" style="display:none;">
+        <div class="card">
+            <div class="card-body p-4">
+                {% if bookings %}
+                {% for booking in bookings %}
+                <div class="learner-row">
+                    <img src="{{ booking.learner.profile.avatar_url }}" alt="{{ booking.learner.get_full_name }}" class="learner-avatar">
+                    <div class="flex-grow-1">
+                        <strong style="font-size:0.9rem;">{{ booking.learner.get_full_name }}</strong>
+                        <div style="font-size:0.8rem;color:#6c757d;">
+                            {{ booking.session.title }} &bull; {{ booking.session.date|date:"M d, Y" }}
+                        </div>
+                    </div>
+                    <span class="credit-badge" style="font-size:0.78rem;"><i class="bi bi-coin"></i> {{ booking.credits_paid }}</span>
+                    {% if booking.status == 'confirmed' %}
+                    <span class="status-badge status-upcoming">Confirmed</span>
+                    {% elif booking.status == 'in_progress' %}
+                    <span class="status-badge status-inprogress"><i class="bi bi-broadcast"></i> Live</span>
+                    {% elif booking.status == 'completed' %}
+                    <span class="status-badge status-completed">Completed</span>
+                    {% elif booking.status == 'pending_review' %}
+                    <span class="status-badge status-pending">Pending Review</span>
+                   {% elif booking.status == 'cancelled' %}
+                    <span class="status-badge status-cancelled">Cancelled</span>
+                    {% endif %}
+                    {% if booking.status in 'confirmed,in_progress,pending_review,completed' %}
+                    <a href="{% url 'start_conversation' booking.learner.pk %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-chat-dots"></i> Message
+                    </a>
+                    {% if booking.pk|stringformat:"s" in dispute_info %}
+                        {% with d=dispute_info|get_item:booking.pk|stringformat:"s" %}
+                            {% if d.status == 'resolved' %}
+                            <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;background:rgba(16,185,129,0.12);color:#059669;font-weight:700;font-size:0.75rem;">
+                                <i class="bi bi-check-circle-fill"></i> Resolved
+                            </span>
+                            {% elif d.status == 'rejected' %}
+                            <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;background:rgba(239,68,68,0.1);color:#dc2626;font-weight:700;font-size:0.75rem;">
+                                <i class="bi bi-x-circle-fill"></i> Rejected
+                            </span>
+                            {% elif d.status == 'under_review' %}
+                            <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;background:rgba(59,130,246,0.1);color:#2563EB;font-weight:700;font-size:0.75rem;">
+                                <i class="bi bi-hourglass-split"></i> Under Review
+                            </span>
+                            {% else %}
+                            <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;background:rgba(245,158,11,0.1);color:#D97706;font-weight:700;font-size:0.75rem;">
+                                <i class="bi bi-flag-fill"></i> Open
+                            </span>
+                            {% endif %}
+                        {% endwith %}
+                    {% else %}
+                    <a href="/disputes/file/{{ booking.pk }}/" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-flag"></i> Dispute
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state" style="padding:30px;">
+                    <i class="bi bi-people"></i>
+                    <p>No bookings yet for your sessions.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    {% else %}
+    <!-- LEARNER VIEW -->
+
+    <div class="mb-4">
+        <div class="session-tabs">
+            {% if inprogress_bookings.count > 0 %}
+            <button class="tab-pill active" onclick="showTab('live', this)">
+                <span class="live-dot"></span> Live Now
+                <span class="count-badge">{{ inprogress_bookings.count }}</span>
+            </button>
+            {% endif %}
+            <button class="tab-pill {% if inprogress_bookings.count == 0 %}active{% endif %}" onclick="showTab('upcoming', this)">
+                <i class="bi bi-calendar-check"></i> Upcoming
+                <span class="count-badge">{{ upcoming_bookings.count }}</span>
+            </button>
+            <button class="tab-pill" onclick="showTab('completed', this)">
+                <i class="bi bi-check-circle"></i> Completed
+                <span class="count-badge">{{ completed_bookings.count }}</span>
+            </button>
+            <button class="tab-pill" onclick="showTab('cancelled', this)">
+                <i class="bi bi-x-circle"></i> Cancelled
+                <span class="count-badge">{{ cancelled_bookings.count }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Learner: Live / In-Progress -->
+    <div id="tab-live" {% if inprogress_bookings.count == 0 %}style="display:none;"{% endif %}>
+        {% for booking in inprogress_bookings %}
+        <div class="session-card inprogress">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="live-dot"></span>
+                        <span class="session-title mb-0">{{ booking.session.title }}</span>
+                        <span class="status-badge status-inprogress"><i class="bi bi-broadcast"></i> Live</span>
+                    </div>
+                    <div class="session-meta mb-3">
+                        <span class="meta-item"><i class="bi bi-person-video3"></i> {{ booking.session.tutor.get_full_name }}</span>
+                        <span class="meta-item"><i class="bi bi-calendar3"></i> {{ booking.session.date|date:"D, M d, Y" }}</span>
+                        <span class="meta-item"><i class="bi bi-clock"></i> {{ booking.session.start_time|time:"g:i A" }} – {{ booking.session.end_time|time:"g:i A" }}</span>
+                        <span class="meta-item"><i class="bi bi-lightbulb"></i> {{ booking.session.skill.name }}</span>
+                        <span class="meta-item"><i class="bi bi-bar-chart"></i> {{ booking.session.get_level_display }}</span>
+                    </div>
+                    <span class="credit-badge"><i class="bi bi-coin"></i> {{ booking.credits_paid }} credits paid</span>
+                    {% if booking.tutor_confirmed and not booking.learner_confirmed %}
+                    <div class="waiting-box mt-2">
+                        <i class="bi bi-exclamation-circle"></i>
+                        Tutor has marked this session complete. Please confirm to release credits.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="d-flex flex-column gap-2 align-items-end">
+                    {% if booking.zoom_join_url %}
+                    <a href="{{ booking.zoom_join_url }}" target="_blank" class="btn-action btn-zoom">
+                        <i class="bi bi-camera-video-fill"></i> Join Zoom
+                    </a>
+                    {% endif %}
+                    {% if not booking.learner_confirmed %}
+                    <form method="POST" action="/mark-complete/{{ booking.pk }}/">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-action btn-complete"
+                                onclick="return confirm('Confirm session complete? This will release your credits to the tutor.')">
+                            <i class="bi bi-check-lg"></i> Mark Complete
+                        </button>
+
+                    </form>
+                    {% endif %}
+                    
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="bi bi-broadcast"></i>
+            <p>No live sessions right now.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Learner: Upcoming Bookings -->
+    <div id="tab-upcoming" {% if inprogress_bookings.count > 0 %}style="display:none;"{% endif %}>
+        {% for booking in upcoming_bookings %}
+        <div class="session-card {% if booking.reschedule_status == 'pending' %}reschedule-pending{% endif %}">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="session-title mb-0">{{ booking.session.title }}</span>
+                        {% if booking.reschedule_status == 'pending' %}
+                        <span class="status-badge status-reschedule">
+                            <i class="bi bi-calendar-event"></i> Reschedule Requested
+                        </span>
+
+
+
+                        {% else %}
+                        <span class="status-badge status-upcoming">
+                            <i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> Confirmed
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="session-meta mb-2">
+                        <span class="meta-item"><i class="bi bi-person-video3"></i> {{ booking.session.tutor.get_full_name }}</span>
+                        <span class="meta-item"><i class="bi bi-calendar3"></i> {{ booking.session.date|date:"D, M d, Y" }}</span>
+                        <span class="meta-item"><i class="bi bi-clock"></i> {{ booking.session.start_time|time:"g:i A" }} – {{ booking.session.end_time|time:"g:i A" }}</span>
+                        <span class="meta-item"><i class="bi bi-lightbulb"></i> {{ booking.session.skill.name }}</span>
+                        <span class="meta-item"><i class="bi bi-bar-chart"></i> {{ booking.session.get_level_display }}</span>
+                    </div>
+                    <span class="credit-badge"><i class="bi bi-coin"></i> {{ booking.credits_paid }} credits paid</span>
+
+                    {% if booking.reschedule_status == 'pending' %}
+                    <!-- Reschedule request box -->
+                    <div class="reschedule-box">
+                        <div class="mb-2">
+                            <i class="bi bi-calendar-event me-1"></i>
+                            <strong>Tutor requested a reschedule:</strong>
+                        </div>
+                        {% if booking.reschedule_deadline %}
+<div class="mb-2" style="font-size:0.8rem;color:#92400E;">
+    <i class="bi bi-clock"></i> Respond before: <strong>{{ booking.reschedule_deadline|date:"g:i A, M d" }}</strong>
+</div>
+{% endif %}
+                        <div class="mb-1">
+                            <span style="text-decoration:line-through;opacity:0.6;">
+                                {{ booking.session.date|date:"D, M d, Y" }} at {{ booking.session.start_time|time:"g:i A" }}
+                            </span>
+                        </div>
+                        <div class="new-time mb-2">
+                            <i class="bi bi-arrow-right me-1"></i>
+                            {{ booking.proposed_date|date:"D, M d, Y" }} at {{ booking.proposed_start_time|time:"g:i A" }} – {{ booking.proposed_end_time|time:"g:i A" }}
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap mt-2">
+                            <a href="/reschedule-accept/{{ booking.pk }}/"
+                               class="btn-action btn-accept"
+                               onclick="return confirm('Accept this reschedule? The session time will be updated once all learners respond.')">
+                                <i class="bi bi-check-lg"></i> Accept
+                            </a>
+                            <a href="/reschedule-decline/{{ booking.pk }}/"
+                               class="btn-action btn-decline"
+                               onclick="return confirm('Decline this reschedule? Your booking will be cancelled and credits refunded. The slot will be available for others to book.')">
+                                <i class="bi bi-x-lg"></i> Decline & Cancel
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="mt-2" style="font-size:0.8rem;color:#6c757d;">
+                        <i class="bi bi-info-circle"></i> Waiting for tutor to start the session
+                    </div>
+                    {% endif %}
+                </div>
+                {% if booking.reschedule_status != 'pending' %}
+                <div class="d-flex flex-column gap-2 align-items-end">
+                    <a href="{% url 'tutor_profile' booking.session.tutor.pk %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-person"></i> View Tutor
+                    </a>
+                    <a href="{% url 'start_conversation' booking.session.tutor.pk %}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-chat-dots"></i> Message Tutor
+</a>
+                    <form method="POST" action="/cancel-booking/{{ booking.pk }}/">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Cancel this booking? Note: cancellation is only allowed up to 2 hours before the session starts.')">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </button>
+                    </form>
+                    <a href="/disputes/file/{{ booking.pk }}/" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-flag"></i> Dispute
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="bi bi-calendar-check"></i>
+            <p>No upcoming sessions. <a href="{% url 'browse_skills' %}">Browse tutors to book one!</a></p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Learner: Completed Bookings -->
+    <div id="tab-completed" style="display:none;">
+        {% for booking in completed_bookings %}
+        <div class="session-card completed">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="session-title mb-0">{{ booking.session.title }}</span>
+                        {% if booking.status == 'pending_review' %}
+                        <span class="status-badge status-pending"><i class="bi bi-star" style="font-size:0.7rem;"></i> Pending Review</span>
+                        {% else %}
+                        <span class="status-badge status-completed"><i class="bi bi-check-circle-fill" style="font-size:0.7rem;"></i> Completed</span>
+                        {% endif %}
+                    </div>
+                    <div class="session-meta mb-2">
+                        <span class="meta-item"><i class="bi bi-person-video3"></i> {{ booking.session.tutor.get_full_name }}</span>
+                        <span class="meta-item"><i class="bi bi-calendar3"></i> {{ booking.session.date|date:"D, M d, Y" }}</span>
+                        <span class="meta-item"><i class="bi bi-lightbulb"></i> {{ booking.session.skill.name }}</span>
+                        <span class="meta-item"><i class="bi bi-bar-chart"></i> {{ booking.session.get_level_display }}</span>
+                    </div>
+                    <span class="credit-badge"><i class="bi bi-coin"></i> {{ booking.credits_paid }} credits paid</span>
+                </div>
+                {% if booking.status == 'pending_review' %}
+<a href="{% url 'leave_review' booking.pk %}" class="btn-action btn-start">
+    <i class="bi bi-star-fill"></i> Leave Review
+</a>
+
+{% elif booking.pk|stringformat:"s" in dispute_info %}
+    {% with d=dispute_info|get_item:booking.pk|stringformat:"s" %}
+        {% if d.status == 'resolved' %}
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(16,185,129,0.12);color:#059669;font-weight:700;font-size:0.82rem;">
+            <i class="bi bi-check-circle-fill"></i> Dispute Resolved
+        </span>
+        {% elif d.status == 'rejected' %}
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(239,68,68,0.1);color:#dc2626;font-weight:700;font-size:0.82rem;">
+            <i class="bi bi-x-circle-fill"></i> Dispute Rejected
+        </span>
+        {% elif d.status == 'under_review' %}
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(59,130,246,0.1);color:#2563EB;font-weight:700;font-size:0.82rem;">
+            <i class="bi bi-hourglass-split"></i> Under Review
+        </span>
+        {% else %}
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(245,158,11,0.1);color:#D97706;font-weight:700;font-size:0.82rem;">
+            <i class="bi bi-flag-fill"></i> Dispute Open
+        </span>
+        {% endif %}
+    {% endwith %}
+{% elif booking.pk in against_dispute_map %}
+    <a href="/disputes/{{ against_dispute_map|get_item:booking.pk }}/"
+       class="btn-action" style="background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;">
+        <i class="bi bi-shield-fill"></i> Respond to Dispute
+    </a>
+{% else %}
+    <a href="/disputes/file/{{ booking.pk }}/" class="btn-action btn-decline">
+        <i class="bi bi-flag-fill"></i> File Dispute
+    </a>
+{% endif %}
+            </div>
+
+
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="bi bi-check-circle"></i>
+            <p>No completed sessions yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Learner: Cancelled Bookings -->
+    <div id="tab-cancelled" style="display:none;">
+        {% for booking in cancelled_bookings %}
+        <div class="session-card cancelled">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="session-title mb-0">{{ booking.session.title }}</span>
+                        <span class="status-badge status-cancelled"><i class="bi bi-x-circle-fill" style="font-size:0.7rem;"></i> Cancelled</span>
+                    </div>
+                    <div class="session-meta">
+                        <span class="meta-item"><i class="bi bi-person-video3"></i> {{ booking.session.tutor.get_full_name }}</span>
+                        <span class="meta-item"><i class="bi bi-calendar3"></i> {{ booking.session.date|date:"D, M d, Y" }}</span>
+                        <span class="meta-item"><i class="bi bi-lightbulb"></i> {{ booking.session.skill.name }}</span>
+                        <span class="meta-item"><i class="bi bi-bar-chart"></i> {{ booking.session.get_level_display }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="bi bi-x-circle"></i>
+            <p>No cancelled bookings.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% endif %}
+    <!-- ══════════════════════════════════════════════════════════════ -->
+
+</div>
+
+<footer class="text-center py-4 mt-4" style="background:#f8f9fa;">
+    <p class="text-muted mb-0 small">&copy; 2025 Skillify. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function showTab(tabName, btn) {
+    document.querySelectorAll('[id^="tab-"]').forEach(function(el) {
+        el.style.display = 'none';
+    });
+    document.querySelectorAll('.tab-pill').forEach(function(b) {
+        b.classList.remove('active');
+    });
+    var panel = document.getElementById('tab-' + tabName);
+    if (panel) panel.style.display = 'block';
+    btn.classList.add('active');
+}
+</script>
+</body>
+</html>
